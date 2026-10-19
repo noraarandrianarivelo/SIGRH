@@ -1,0 +1,121 @@
+CONCEPTION DE LOGICIEL DE GESTION DE RH(Ressource Humaine)
+
+CYCLE PERSONNEL
+
+1- Manifestation de besoin de personnels  (Mila olona issocuper tache 1 na maromaro) 
+ex: dep logistique mila chauffeur
+dep finance mila controlleur financier
+
+
+2- Puis Mandeha ny procedure ana recrutement
+
+3- Apres Mandeha ny embauce (creation de contrat)
+
+4- Vie du salarie
+
+5- Evolution du salarie
+
+6- Rupture de contrat (maty, demissionne, voroka)
+
+
+
+OBJECTIFS PEDAGOGIQUES
+Comprendre les processus RH avant de concevoir les fonctionnalites du LOGICIEL
+Transformer un processus metier en regle de gestion, donnees, workflows et interfaces
+Concevoir un SIRH (Systeme d'information des Ressource humaine) couvrant tout le cycle de vie du salarie
+Eviter une conception limitee a de simples ecrans CRUD
+Faire evoluer un meme cas pratique jusqu'a l'architecture et au MVP
+
+
+
+Manamboatra groupe de 5 personne (3 min et 5 max)
+
+
+
+
+BLOC MAROMARO: 
+
+I/ Expression du besoin en personnels
+un manager ou chef de service ou ... exprime un besoin: creation ou remplacement d'un poste
+informations: poste, departement, effectif, motif, budget, date souhaite
+Inona le poste, quel departement?, quel service ou quel section? , firy no ilaina? , inona ny motif ilana azy? , budget allouer (grille de salaire existant any am RH), rovina no ilaina personnel vaovao
+workflows: Manager -> RH -> Direction -> ouverture du recrutement
+Objets metier: departement, poste, demandeRecrutement, Validation
+Point de conception: un POSTE existe independamment de l'EMPLOYE
+
+II/ recrutement
+Transformer une demande validee en offre d'emploi
+Publier l'offre et recevoir plusieurs candidatures
+Preselectionner, organiser les entretiens et les tests
+Conserver les evaluations et la decision finales 
+Objets: OffreEmploi, Candidat, Candidature, Entretien, EvaluationCandidat
+
+Atao oe 3 niveau fa manjary lava be (ex: niveau 0: test ecrit, niveau 1: RH, niveau 2: manager, niveau 3: direction general)
+
+pourt tout application, le plus immportant est la tracabilite des mouvements
+tous les historiques devrait etre tracabilite
+
+III/ Selection et embauche
+Le candidat retenun recoit une proposition d'embauche
+Apres acceptation: creation du dossier salarie et du matricule
+Creer le contrat, le poste et l'affectatino
+Point de conception: CANDIDAT != EMPLOYE
+Une personne peut avoir plusieurs candidatures avant de devenir salarie
+ex: salaire, date et heure de travail, lieu de travail (mijery am internet oe inona ny question amin'ny contrat de travail? de rehefa accepte le izy, de creer le pdf contrat de travail)
+
+IV/ Contrat en onboarding
+Un salarie peut avoir plusieurs contrats successifs: CE (Contrat d'essai) , CDD (Contrat duree determinee), Renouvellement, CDI (Contrat duree indeterminee)
+CE: essai tsy mihazo mihoatra ny 1 ans (6 mois renouvelable 1 fois)
+
+Ne pas ecraser l'historiques en stockant seulement employe.type_contrat
+
+CDD: 2 ans renouvelable 1 fois (afaka andalovana, afaka tsy andalovana)
+
+ny contrat rehetra tokony historisena, tam ovina no nanomboka ny CE, ovina no tapitra, ovina ny nanomboka ny CDD,...
+
+par defaut rehefa accepte de CE, fa afaka misafidy le olona
+
+Etat: cree, signe, valide
+
+Onboarding: contrat signe, badge, compte, materiel, formation, inscription paie 
+Objets: Contrat, Affectation, Onboarding, OnboardingTache, Document.
+
+Utiliser un checklist et un workflow de d'integration
+
+
+
+============>>>>>>>>>>>>>> HATREO NY VITAINA AMIN'NY HERINANDRO
+NA VENDREDI NA AMIN'NY TAPA-BOLANA
+
+Ze 5 mavita voalohany de tsy mitsara ny tohin'ny le RH tsony
+Application Web
+Techno ze tiana
+Ny mobile tsy votery (surplus zay)
+
+vo une fois former ny groupe de tsy mahazo miova tsony
+
+Manifestation de besoin -> Onboarding
+
+
+Structure an entreprise, ca depend de la taille de l'entreprise
+
+Architecture technique possible:
+
+Couche applicative
+- Front Web / mobile
+- API REST
+- Services metier RH
+- Moteur de workflow
+- Authentification
+
+
+Donnees & integration
+Postgresql / Mysql
+GED / Stockages documents
+Notifications 
+Audit & logs 
+Reporting / BI (mila atao)
+
+
+Guide classique io fa afaka ameliorena arakaraka
+
