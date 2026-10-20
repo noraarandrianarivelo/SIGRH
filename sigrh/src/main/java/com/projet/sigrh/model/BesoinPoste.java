@@ -1,10 +1,11 @@
 package com.projet.sigrh.model;
+
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "besoin_poste")
 public class BesoinPoste {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,26 +18,31 @@ public class BesoinPoste {
     @JoinColumn(name = "id_poste")
     private Poste poste;
 
-    @Column(name = "libelle_poste_propose", length = 100)
+    @Column(name = "libelle_poste_propose")
     private String libellePostePropose;
 
     @Column(nullable = false)
-    private Integer effectif;
+    private int effectif;
 
-    @Column(name = "budget_mensuel_unitaire", nullable = false, precision = 14, scale = 2)
-    private BigDecimal budgetMensuelUnitaire;
+    @Column(name = "budget_mensuel_unitaire", nullable = false)
+    private double budgetMensuelUnitaire;
 
     // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public Besoin getBesoin() { return besoin; }
     public void setBesoin(Besoin besoin) { this.besoin = besoin; }
+
     public Poste getPoste() { return poste; }
     public void setPoste(Poste poste) { this.poste = poste; }
+
     public String getLibellePostePropose() { return libellePostePropose; }
     public void setLibellePostePropose(String libellePostePropose) { this.libellePostePropose = libellePostePropose; }
-    public Integer getEffectif() { return effectif; }
-    public void setEffectif(Integer effectif) { this.effectif = effectif; }
-    public BigDecimal getBudgetMensuelUnitaire() { return budgetMensuelUnitaire; }
-    public void setBudgetMensuelUnitaire(BigDecimal budgetMensuelUnitaire) { this.budgetMensuelUnitaire = budgetMensuelUnitaire; }
+
+    public int getEffectif() { return effectif; }
+    public void setEffectif(int effectif) { this.effectif = effectif; }
+
+    public double getBudgetMensuelUnitaire() { return budgetMensuelUnitaire; }
+    public void setBudgetMensuelUnitaire(double budgetMensuelUnitaire) { this.budgetMensuelUnitaire = budgetMensuelUnitaire; }
 }

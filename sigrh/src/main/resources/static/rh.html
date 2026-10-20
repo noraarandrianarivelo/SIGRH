@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Espace RH - Validation des Demandes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f9; }
+        h1, h2 { color: #333; }
+        .header-bar { background: #fff; padding: 15px 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        button { padding: 6px 12px; margin-right: 5px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .btn-refresh { background-color: #6c757d; color: white; margin-bottom: 15px; }
+        .btn-valider { background-color: #28a745; color: white; }
+        .btn-corriger { background-color: #ffc107; color: black; }
+        .btn-rejeter { background-color: #dc3545; color: white; }
+        .user-info { font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <h1>Tableau de Bord - SIRH (Espace RH)</h1>
+        <span id="userInfo" class="user-info">Chargement...</span>
+    </div>
+
+    <h2>Demandes en attente de validation RH</h2>
+    <button class="btn-refresh" onclick="chargerDemandesRh()">Rafraîchir la liste</button>
+
+    <table id="tableRh">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Demandeur</th>
+                <th>Département</th>
+                <th>Motif</th>
+                <th>Statut Actuel</th>
+                <th>Actions RH</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Les demandes seront injectées ici dynamiquement -->
+        </tbody>
+    </table>
+
+    <script>
+        // 1. Vérifier l'utilisateur connecté au chargement de la page
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('/api/auth/current-user')
+                .then(res => {
+                    if (!res.ok) throw new Error("Non authentifié");
+                    return res.json();
+                })
+                .then(user => {
+                    document.getElementById('userInfo').innerText = `Connecté : ${user.nom || user.username} (${user.role})`;
+                    
+                    // Sécurité basique : si ce n'est ni un RH ni la Direction, on redirige vers l'accueil
+                    if (user.role !== 'ROLE_RH' && user.role !== 'ROLE_DIRECTION') {
+                        alert("Accès réservé au profil RH.");
+                        window.location.href = '/index.html';
+                    } else {
+                        chargerDemandesRh();
+                    }
+                })
+                .catch(err => {
+                    console.error("Erreur d'authentification :", err);
+                    window.location.href = '/index.html';
+                });
+        });
+
+        // 2. Récupérer toutes les demandes et filtrer celles en ATTENTE_RH
+        function chargerDemandesRh() {
+            fetch('/api/recrutement/demandes')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#tableRh tbody');
+                    tbody.innerHTML = '';
+
+                    let count = 0;
+                    data.forEach(d => {
+                        if (d.statut === 'ATTENTE_RH') {
+                            count++;
+                            let tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${d.id}</td>
+                                <td>${d.demandeur ? d.demandeur.nom + ' ' + d.demandeur.prenom : 'N/A'}</td>
+                                <td>${d.besoin && d.besoin.departement ? d.besoin.departement.libelle : 'N/A'}</td>
+                                <td>${d.besoin ? d.besoin.motif : 'N/A'}</td>
+                                <td><strong>${d.statut}</strong></td>
+                                <td>
+                                    <button class="btn-valider" onclick="agirDemande(${d.id}, 'APPROUVEE')">Valider</button>
+                                    <button class="btn-corriger" onclick="agirDemande(${d.id}, 'A_CORRIGER')">Demander correction</button>
+                                    <button class="btn-rejeter" onclick="agirDemande(${d.id}, 'REJETEE')">Rejeter</button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        }
+                    });
+
+                    if (count === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #777;">Aucune demande en attente de validation RH.</td></tr>`;
+                    }
+                })
+                .catch(err => console.error("Erreur lors du chargement des demandes :", err));
+        }
+
+        // 3. Traiter la décision RH (Valider, Corriger, Rejeter)
+        function agirDemande(idDemande, decision) {
+            let messageConfirm = `Êtes-vous sûr de vouloir appliquer la décision : ${decision} ?`;
+            if (!confirm(messageConfirm)) return;
+
+            fetch(`/api/recrutement/demandes/${idDemande}/valider?decision=${decision}`, {
+                method: 'PUT'
+            })
+            .then(res => {
+                if (res.ok) {
+                    alert("Décision enregistrée avec succès !");
+                    chargerDemandesRh(); // Rafraîchir le tableau
+                } else {
+                    alert("Erreur lors du traitement de la demande.");
+                }
+            })
+            .catch(err => console.error("Erreur réseau :", err));
+        }
+    </script>
+</body>
+</html>

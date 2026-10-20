@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>SIGRH - Bloc 1 : Expression des Besoins</title>
+</head>
+<body>
+    <h1>Tableau de bord - SIRH (Bloc 1 : Recrutement)</h1>
+    <p>Connecté en tant que : <strong id="userConnected">Chargement...</strong></p>
+    
+    <hr>
+    
+    <!-- Section visible uniquement pour les Managers / Direction -->
+    <div id="sectionManager" style="display:none;">
+        <h2>Créer une Demande de Recrutement</h2>
+        <form id="formDemande">
+            <label>Type de besoin : 
+                <select id="typeBesoin" onchange="changerTypeBesoin()">
+                    <option value="EXISTANT">Poste existant</option>
+                    <option value="CREATION">Création d'un nouveau poste</option>
+                </select>
+            </label><br><br>
+
+            <label>Département : 
+                <select id="departementId" onchange="chargerPostesParDepartement()">
+                    <!-- Chargé dynamiquement -->
+                </select>
+            </label><br><br>
+            
+            <!-- Bloc Poste Existant -->
+            <div id="blocPosteExistant">
+                <label>Poste concerné : 
+                    <select id="posteId">
+                        <!-- Chargé dynamiquement selon le département -->
+                    </select>
+                </label><br><br>
+            </div>
+
+            <!-- Bloc Nouveau Poste (masqué par défaut) -->
+            <div id="blocNouveauPoste" style="display:none;">
+                <label>Libellé du nouveau poste : <input type="text" id="libelleNouveauPoste" placeholder="Ex: Data Scientist"></label><br><br>
+            </div>
+
+            <label>Type de Motif : 
+                <select id="typeMotif">
+                    <option value="NOUVEAU_POSTE">Nouveau Poste</option>
+                    <option value="REMPLACEMENT">Remplacement (Départ/Licenciement)</option>
+                </select>
+            </label><br><br>
+
+            <label>Motif précis : <input type="text" id="motif" required placeholder="Ex: Renforcement équipe backend"></label><br><br>
+            
+            <label>Effectif (Nombre de postes) : <input type="number" id="effectif" value="1" min="1"></label><br><br>
+
+            <label>Budget mensuel unitaire (Ar) : <input type="number" id="budget" value="2500000"></label><br><br>
+            
+            <label>Date d'arrivée souhaitée : <input type="date" id="dateArrivee" required></label><br><br>
+            
+            <button type="submit">Créer le brouillon de demande</button>
+        </form>
+        <hr>
+    </div>
+
+    <h2>Suivi des Demandes et Workflow de Validation</h2>
+    <button onclick="chargerDonnees()">Rafraîchir</button>
+    <br><br>
+    <table border="1" cellpadding="8" id="tableDemandes">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Demandeur</th>
+                <th>Département</th>
+                <th>Motif</th>
+                <th>Statut Actuel</th>
+                <th>Actions Disponibles</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let currentUser = null;
+
+        window.onload = function() {
+            verifierSessionEtCharger();
+        };
+
+        function verifierSessionEtCharger() {
+            // Récupérer l'utilisateur connecté
+            fetch('/api/auth/current-user')
+                .then(res => res.json())
+                .then(user => {
+                    currentUser = user;
+                    document.getElementById('userConnected').innerText = `${user.nom} (${user.role})`;
+                    
+                    if(user.role === 'ROLE_MANAGER' || user.role === 'ROLE_DIRECTION') {
+                        document.getElementById('sectionManager').style.display = 'block';
+                        chargerDepartements();
+                    }
+                    chargerDonnees();
+                }).catch(() => {
+                    // Fallback si l'endpoint d'authentification n'est pas strict en mode test
+                    document.getElementById('userConnected').innerText = "Manager (Mode Test)";
+                    document.getElementById('sectionManager').style.display = 'block';
+                    chargerDepartements();
+                    chargerDonnees();
+                });
+        }
+
+    function changerTypeBesoin() {
+        const type = document.getElementById('typeBesoin').value;
+        const typeMotifSelect = document.getElementById('typeMotif');
+
+        if (type === 'CREATION') {
+            document.getElementById('blocPosteExistant').style.display = 'none';
+            document.getElementById('blocNouveauPoste').style.display = 'block';
+            
+            // Logique métier : Une création de poste implique forcément un motif "Nouveau Poste"
+            typeMotifSelect.value = 'NOUVEAU_POSTE';
+            typeMotifSelect.disabled = true; // Verrouille le choix pour éviter les erreurs
+        } else {
+            document.getElementById('blocPosteExistant').style.display = 'block';
+            document.getElementById('blocNouveauPoste').style.display = 'none';
+            
+            // On redonne la main sur le motif si c'est un poste existant (Remplacement, etc.)
+            typeMotifSelect.disabled = false;
+        }
+    }
+
+        function chargerDepartements() {
+            fetch('/api/departements')
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById('departementId');
+                    select.innerHTML = '';
+                    data.forEach(d => {
+                        select.innerHTML += `<option value="${d.id}">${d.libelle}</option>`;
+                    });
+                    chargerPostesParDepartement();
+                });
+        }
+
+        function chargerPostesParDepartement() {
+            const deptId = document.getElementById('departementId').value;
+            fetch(`/api/postes?departementId=${deptId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById('posteId');
+                    select.innerHTML = '';
+                    if(data.length === 0) {
+                        select.innerHTML = `<option value="">Aucun poste existant</option>`;
+                    } else {
+                        data.forEach(p => {
+                            select.innerHTML += `<option value="${p.id}">${p.libelle}</option>`;
+                        });
+                    }
+                });
+        }
+
+    function chargerDonnees() {
+        fetch('/api/recrutement/demandes')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#tableDemandes tbody');
+                tbody.innerHTML = '';
+                
+                // Sécurité : si data n'est pas un tableau, on affiche l'erreur dans la console
+                if (!Array.isArray(data)) {
+                    console.error("L'API n'a pas renvoyé un tableau :", data);
+                    return;
+                }
+
+                data.forEach(d => {
+                    let actionsHtml = '';
+                    if (d.statut === 'BROUILLON' || d.statut === 'A_CORRIGER') {
+                        actionsHtml += `<button onclick="soumettre(${d.id})">Soumettre</button> `;
+                    }
+
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${d.id}</td>
+                        <td>${d.demandeur ? d.demandeur.nom + ' ' + d.demandeur.prenom : 'N/A'}</td>
+                        <td>${d.besoin && d.besoin.departement ? d.besoin.departement.libelle : 'N/A'}</td>
+                        <td>${d.besoin ? d.besoin.motif : 'N/A'}</td>
+                        <td><strong>${d.statut}</strong></td>
+                        <td>${actionsHtml}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => console.error("Erreur fetch demandes :", err));
+    }
+
+        document.getElementById('formDemande').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const typeBesoinVal = document.getElementById('typeBesoin').value;
+            
+            const payload = {
+                departementId: parseInt(document.getElementById('departementId').value),
+                typeBesoin: typeBesoinVal,
+                posteId: typeBesoinVal === 'EXISTANT' ? parseInt(document.getElementById('posteId').value) : null,
+                libelleNouveauPoste: typeBesoinVal === 'CREATION' ? document.getElementById('libelleNouveauPoste').value : null,
+                typeMotif: document.getElementById('typeMotif').value,
+                motif: document.getElementById('motif').value,
+                effectif: parseInt(document.getElementById('effectif').value),
+                budgetMensuelUnitaire: parseFloat(document.getElementById('budget').value),
+                dateArriveeSouhaitee: document.getElementById('dateArrivee').value
+            };
+
+            fetch('/api/recrutement/demandes/creer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => {
+                if(res.ok) {
+                    alert('Demande créée avec succès au statut BROUILLON !');
+                    chargerDonnees();
+                    document.getElementById('formDemande').reset();
+                    changerTypeBesoin();
+                } else {
+                    res.text().then(err => alert('Erreur : ' + err));
+                }
+            });
+        });
+
+        function soumettre(id) {
+            fetch(`/api/recrutement/demandes/${id}/soumettre`, { method: 'PUT' })
+                .then(res => { 
+                    if(res.ok) {
+                        chargerDonnees();
+                    } else {
+                        res.text().then(err => alert('Erreur lors de la soumission'));
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
