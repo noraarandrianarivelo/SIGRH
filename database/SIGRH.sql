@@ -38,17 +38,21 @@ CREATE TABLE grille_salaire (
 CREATE TABLE besoin (
     id SERIAL PRIMARY KEY,
     id_departement INTEGER NOT NULL REFERENCES departement(id),
+    -- NOUVEAU : catégorie du motif (adapte la liste à ton cours).
+    type_motif VARCHAR(30) NOT NULL
+        CHECK (type_motif IN ('REMPLACEMENT','NOUVEAU_POSTE','NOUVEAU_SERVICE','AUTRE')),
     motif TEXT NOT NULL
 );
 
--- Un besoin peut demander plusieurs postes, chacun avec son effectif.
 CREATE TABLE besoin_poste (
     id SERIAL PRIMARY KEY,
     id_besoin INTEGER NOT NULL REFERENCES besoin(id),
-    id_poste INTEGER NOT NULL REFERENCES poste(id),
+    id_poste INTEGER REFERENCES poste(id),
+    libelle_poste_propose VARCHAR(100),
     effectif INTEGER NOT NULL CHECK (effectif > 0),
-    budget_mensuel_unitaire NUMERIC(14,2),
-    UNIQUE (id_besoin, id_poste)
+    budget_mensuel_unitaire NUMERIC(14,2) NOT NULL CHECK (budget_mensuel_unitaire >= 0),
+    UNIQUE (id_besoin, id_poste),
+    CHECK (id_poste IS NOT NULL OR libelle_poste_propose IS NOT NULL)
 );
 
 CREATE TABLE demande_recrutement (
@@ -57,11 +61,13 @@ CREATE TABLE demande_recrutement (
     id_demandeur VARCHAR(10) NOT NULL REFERENCES employe(id),
     date_creation DATE NOT NULL DEFAULT CURRENT_DATE,
     date_arrivee_souhaitee DATE,
-    circuit VARCHAR(20) NOT NULL DEFAULT 'STANDARD', -- STANDARD / DIRECTION_DIRECTE
-    validation_finance BOOLEAN NOT NULL DEFAULT FALSE, -- Contrôle requis ou non.
+    circuit VARCHAR(20) NOT NULL DEFAULT 'STANDARD'
+        CHECK (circuit IN ('STANDARD','DIRECTION_DIRECTE')),
+    validation_finance BOOLEAN NOT NULL DEFAULT FALSE,
     statut VARCHAR(30) NOT NULL DEFAULT 'BROUILLON'
-    -- BROUILLON / ATTENTE_RH / ATTENTE_FINANCE / ATTENTE_DIRECTION /
-    -- A_CORRIGER / VALIDEE / REJETEE
+        CHECK (statut IN ('BROUILLON','ATTENTE_RH','ATTENTE_FINANCE',
+                          'ATTENTE_DIRECTION','A_CORRIGER','VALIDEE','REJETEE')),
+    CHECK (date_arrivee_souhaitee IS NULL OR date_arrivee_souhaitee >= date_creation)
 );
 
 -- Ajouter une ligne à chaque décision, avec l'acteur et son commentaire.
@@ -69,10 +75,14 @@ CREATE TABLE historique_validation (
     id SERIAL PRIMARY KEY,
     id_demande INTEGER NOT NULL REFERENCES demande_recrutement(id),
     id_validateur VARCHAR(10) NOT NULL REFERENCES employe(id),
-    etape VARCHAR(20) NOT NULL, -- RH / FINANCE / DIRECTION
-    decision VARCHAR(20) NOT NULL, -- APPROUVEE / REJETEE / A_CORRIGER
+    etape VARCHAR(20) NOT NULL
+        CHECK (etape IN ('RH','FINANCE','DIRECTION')),
+    decision VARCHAR(20) NOT NULL
+        CHECK (decision IN ('APPROUVEE','REJETEE','A_CORRIGER')),
     date_validation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    commentaire TEXT
+    commentaire TEXT,
+    -- Motif obligatoire si ce n'est pas une approbation.
+    CHECK (decision = 'APPROUVEE' OR (commentaire IS NOT NULL AND length(trim(commentaire)) > 0))
 );
 
 -- MODULE 2 : offres et candidatures.
@@ -109,9 +119,6 @@ CREATE TABLE candidature (
     message TEXT,
     date_candidature TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     statut VARCHAR(30) NOT NULL DEFAULT 'RECUE', -- RECUE / PRESELECTIONNEE / RETENUE / REJETEE
-    id_decideur VARCHAR(10) REFERENCES employe(id),
-    date_decision TIMESTAMP,
-    motif_decision TEXT,
     UNIQUE (id_candidat, id_offre)
 );
 
@@ -135,6 +142,20 @@ CREATE TABLE seance_evaluation (
     lieu_entretien TEXT,
     lieu_test TEXT,
     statut VARCHAR(20) NOT NULL DEFAULT 'PLANIFIEE' -- PLANIFIEE / TERMINEE / ANNULEE / ABSENT
+);
+
+create table decision_candidature(
+    id SERIAL PRIMARY KEY,
+    label VARCHAR(30)
+);
+
+CREATE TABLE historique_decision_candidature (
+    id SERIAL PRIMARY KEY,
+    id_candidature INTEGER NOT NULL REFERENCES candidature(id),
+    id_decideur VARCHAR(50) NOT NULL REFERENCES employe(id) ,
+    idDecision INTEGER NOT NULL REFERENCES decision_candidature(id),
+    date_decision TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    motif TEXT
 );
 
 -- Une seule fiche par séance. NULL signifie qu'aucune note n'est renseignée.
@@ -217,6 +238,20 @@ CREATE UNIQUE INDEX uq_affectation_en_cours
     ON affectation (id_employe) WHERE date_fin IS NULL;
 
 CREATE INDEX idx_affectation_employe ON affectation (id_employe, date_debut);
+
+CREATE TABLE role_user (
+    id SERIAL PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE utilisateur (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    id_role INTEGER NOT NULL REFERENCES role_user(id),
+    id_employee INTEGER UNIQUE REFERENCES employe(id),
+    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 COMMIT;
 
