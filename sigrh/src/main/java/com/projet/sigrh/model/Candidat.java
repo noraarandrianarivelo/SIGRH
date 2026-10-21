@@ -25,7 +25,7 @@ public class Candidat {
     public String prenom;
     @Column(name = "date_naissance")
     public LocalDate dateNaissance;
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     public String email;
     @Column(name = "telephone")
     public String telephone;
