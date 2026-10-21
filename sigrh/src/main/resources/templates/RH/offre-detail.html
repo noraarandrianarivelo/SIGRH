@@ -151,6 +151,13 @@
                             <td sec:authorize="!hasAuthority('ROLE_DIRECTION')" class="muted">
                                 Décision réservée à la Direction
                             </td>
+                            <td sec:authorize="hasAnyAuthority('ROLE_RH', 'ROLE_DIRECTION')">
+                                <a class="button"
+                                   th:if="${ligne.candidature.statut == 'RESERVE'}"
+                                   th:href="@{/rh/candidatures/{id}/proposition(id=${ligne.candidature.id})}">
+                                    Choisir ce candidat
+                                </a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

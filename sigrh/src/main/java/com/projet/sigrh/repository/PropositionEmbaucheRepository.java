@@ -12,4 +12,8 @@ public interface PropositionEmbaucheRepository extends JpaRepository<Proposition
 
     Optional<PropositionEmbauche> findFirstByCandidatureIdAndStatutInOrderByDateEnvoiDesc(
             Integer candidatureId, java.util.Collection<String> statuts);
+
+    boolean existsByCandidatureIdAndStatut(Integer candidatureId, String statut);
+
+    boolean existsByCandidatureOffreIdAndStatutIn(Integer offreId, java.util.Collection<String> statuts);
 }

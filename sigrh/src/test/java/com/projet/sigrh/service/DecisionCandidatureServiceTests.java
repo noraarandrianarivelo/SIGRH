@@ -56,9 +56,21 @@ class DecisionCandidatureServiceTests {
         CandidatureRepository candidatureRepository = mock(CandidatureRepository.class);
         Candidature candidature = candidature(12, 5);
         when(candidatureRepository.findById(12)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.countByOffreIdAndStatut(7, "RESERVE")).thenReturn(4L);
 
         assertDoesNotThrow(() -> service(candidatureRepository, decisionRepository()).decider(12,
                 new DecisionCandidatureRequest("RESERVE", "Décision finale à compléter"), direction()));
+    }
+
+    @Test
+    void refuseUneMiseEnReserveQuandLaCapaciteEstAtteinte() {
+        CandidatureRepository candidatureRepository = mock(CandidatureRepository.class);
+        Candidature candidature = candidature(12, 5);
+        when(candidatureRepository.findById(12)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.countByOffreIdAndStatut(7, "RESERVE")).thenReturn(5L);
+
+        assertThrows(BusinessException.class, () -> service(candidatureRepository, decisionRepository()).decider(12,
+                new DecisionCandidatureRequest("RESERVE", "Liste de réserve complète"), direction()));
     }
 
     private DecisionCandidatureService service(CandidatureRepository candidatureRepository,

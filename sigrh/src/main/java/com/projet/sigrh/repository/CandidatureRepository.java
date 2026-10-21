@@ -9,6 +9,8 @@ import com.projet.sigrh.model.Candidature;
 public interface CandidatureRepository extends JpaRepository<Candidature, Integer> {
     List<Candidature> findByOffreId(Integer offreId);
 
+    List<Candidature> findByOffreIdAndStatutOrderByDateCandidatureAsc(Integer offreId, String statut);
+
     boolean existsByCandidatIdAndOffreId(Integer candidatId, Integer offreId);
 
     boolean existsByOffreIdAndStatut(Integer offreId, String statut);

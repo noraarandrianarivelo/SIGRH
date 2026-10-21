@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -19,8 +19,8 @@ public class OffreEmploi {
     @Column(name = "id")
     public Integer id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "id_besoin_poste", nullable = false, unique = true)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_besoin_poste", nullable = false)
     public BesoinPoste besoinPoste;
 
     @Column(name = "titre")

@@ -15,8 +15,11 @@ import com.projet.sigrh.exception.BusinessException;
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.Candidat;
 import com.projet.sigrh.model.Employe;
+import com.projet.sigrh.model.OffreEmploi;
 import com.projet.sigrh.model.PropositionEmbauche;
 import com.projet.sigrh.model.Utilisateur;
+import com.projet.sigrh.repository.CandidatureRepository;
+import com.projet.sigrh.repository.OffreEmploiRepository;
 import com.projet.sigrh.repository.PropositionEmbaucheRepository;
 import com.projet.sigrh.repository.DemandeRecrutementRepository;
 import com.projet.sigrh.repository.EmployeRepository;
@@ -29,12 +32,17 @@ public class PropositionEmbaucheService {
     private final PropositionEmbaucheRepository repository;
     private final DemandeRecrutementRepository demandeRepository;
     private final EmployeRepository employeRepository;
+    private final CandidatureRepository candidatureRepository;
+    private final OffreEmploiRepository offreRepository;
 
     public PropositionEmbaucheService(PropositionEmbaucheRepository repository,
-            DemandeRecrutementRepository demandeRepository, EmployeRepository employeRepository) {
+            DemandeRecrutementRepository demandeRepository, EmployeRepository employeRepository,
+            CandidatureRepository candidatureRepository, OffreEmploiRepository offreRepository) {
         this.repository = repository;
         this.demandeRepository = demandeRepository;
         this.employeRepository = employeRepository;
+        this.candidatureRepository = candidatureRepository;
+        this.offreRepository = offreRepository;
     }
 
     public BigDecimal salaireInitial(Candidature candidature) {
@@ -82,8 +90,40 @@ public class PropositionEmbaucheService {
         proposition.messageReponse = message == null || message.isBlank() ? null : message.trim();
         if ("ACCEPTEE".equals(statut)) {
             creerEmploye(proposition.candidature);
+        } else {
+            traiterRefus(proposition);
         }
         repository.save(proposition);
+    }
+
+    private void traiterRefus(PropositionEmbauche proposition) {
+        Candidature candidatureRefusee = proposition.candidature;
+        candidatureRefusee.statut = "REJETEE";
+        candidatureRepository.save(candidatureRefusee);
+
+        boolean reserveDisponible = !candidatureRepository
+                .findByOffreIdAndStatutOrderByDateCandidatureAsc(candidatureRefusee.offre.id, "RESERVE")
+                .isEmpty();
+        boolean autrePropositionActive = repository.existsByCandidatureOffreIdAndStatutIn(
+                candidatureRefusee.offre.id, List.of("EN_ATTENTE", "ACCEPTEE"));
+        if (!reserveDisponible && !autrePropositionActive) {
+            creerNouvelleOffre(candidatureRefusee.offre);
+        }
+    }
+
+    private OffreEmploi creerNouvelleOffre(OffreEmploi ancienneOffre) {
+        ancienneOffre.statut = "CLOTUREE";
+        offreRepository.save(ancienneOffre);
+
+        OffreEmploi nouvelleOffre = new OffreEmploi();
+        nouvelleOffre.besoinPoste = ancienneOffre.besoinPoste;
+        nouvelleOffre.titre = ancienneOffre.titre;
+        nouvelleOffre.description = ancienneOffre.description;
+        nouvelleOffre.dateCreation = LocalDate.now();
+        nouvelleOffre.datePublication = LocalDate.now();
+        nouvelleOffre.dateLimite = ancienneOffre.dateLimite;
+        nouvelleOffre.statut = "OUVERT";
+        return offreRepository.save(nouvelleOffre);
     }
 
     private Employe creerEmploye(Candidature candidature) {
@@ -118,8 +158,8 @@ public class PropositionEmbaucheService {
     public PropositionEmbauche envoyer(Candidature candidature, PropositionEmbaucheRequest request,
             Utilisateur utilisateur) {
         verifierEmetteur(utilisateur);
-        if (!"RETENUE".equals(candidature.statut)) {
-            throw new BusinessException("Une proposition ne peut être envoyée qu'à un candidat retenu.");
+        if (!"RETENUE".equals(candidature.statut) && !"RESERVE".equals(candidature.statut)) {
+            throw new BusinessException("Une proposition ne peut être envoyée qu'à un candidat retenu ou en réserve.");
         }
         if (request == null) {
             throw new BusinessException("Les informations de la proposition sont obligatoires.");

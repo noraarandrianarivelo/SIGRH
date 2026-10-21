@@ -71,15 +71,10 @@ public class DecisionCandidatureService {
             throw new BusinessException("Le motif de la décision est obligatoire.");
         }
         if (RETENUE.equals(decisionLabel) && !RETENUE.equals(candidature.statut)) {
-            Integer effectif = candidature.offre.besoinPoste.getEffectif();
-            if (effectif == null || effectif < 1) {
-                throw new BusinessException("L'effectif demandé pour cette offre est invalide.");
-            }
-            long retenus = candidatureRepository.countByOffreIdAndStatut(candidature.offre.id, RETENUE);
-            if (retenus >= effectif) {
-                throw new BusinessException("Le nombre de candidats retenus atteint déjà l'effectif demandé ("
-                        + effectif + ").");
-            }
+            verifierCapacite(candidature, RETENUE, "retenus");
+        }
+        if (RESERVE.equals(decisionLabel) && !RESERVE.equals(candidature.statut)) {
+            verifierCapacite(candidature, RESERVE, "en réserve");
         }
 
         DecisionCandidature decision = decisionRepository.findByLabel(decisionLabel)
@@ -99,6 +94,18 @@ public class DecisionCandidatureService {
 
         candidature.statut = decisionLabel;
         candidatureRepository.save(candidature);
+    }
+
+    private void verifierCapacite(Candidature candidature, String statut, String libelle) {
+        Integer effectif = candidature.offre.besoinPoste.getEffectif();
+        if (effectif == null || effectif < 1) {
+            throw new BusinessException("L'effectif demandé pour cette offre est invalide.");
+        }
+        long nombre = candidatureRepository.countByOffreIdAndStatut(candidature.offre.id, statut);
+        if (nombre >= effectif) {
+            throw new BusinessException("Le nombre de candidats " + libelle
+                    + " atteint déjà l'effectif demandé (" + effectif + ").");
+        }
     }
 
     private EvaluationCandidatureView.NoteView note(SeanceEvaluation seance) {

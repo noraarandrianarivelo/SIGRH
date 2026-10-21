@@ -148,9 +148,9 @@ public class RHController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Le service de proposition n'est pas configuré");
         }
-        if (!"RETENUE".equals(candidature.statut)) {
+        if (!"RETENUE".equals(candidature.statut) && !"RESERVE".equals(candidature.statut)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Une proposition ne peut être préparée que pour un candidat retenu");
+                    "Une proposition ne peut être préparée que pour un candidat retenu ou en réserve");
         }
         if (propositionService.propositionActive(id).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
