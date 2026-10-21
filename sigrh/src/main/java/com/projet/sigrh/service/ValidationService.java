@@ -107,6 +107,7 @@ public class ValidationService {
                     : ligne.getPoste().getLibelle();
             offre.description = d.getBesoin().getMotif();
             offre.dateCreation = dateCreation;
+            offre.datePublication = dateCreation;
             offre.dateLimite = d.getDateArriveeSouhaitee();
             offre.statut = "OUVERT";
             offres.add(offre);
