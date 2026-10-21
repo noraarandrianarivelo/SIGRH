@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestion des offres — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panel" aria-labelledby="offres-title">
+            <header class="title-row">
+                <div>
+                    <p class="eyebrow">Recrutement</p>
+                    <h1 id="offres-title">Gestion des offres</h1>
+                </div>
+            </header>
+
+            <div class="table-wrap" th:if="${!#lists.isEmpty(offres)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Référence</th>
+                            <th scope="col">Offre</th>
+                            <th scope="col">Création</th>
+                            <th scope="col">Publication</th>
+                            <th scope="col">Date limite</th>
+                            <th scope="col">Statut</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="offre : ${offres}">
+                            <td th:text="${offre.id}">1</td>
+                            <td th:text="${offre.titre}">Titre de l'offre</td>
+                            <td th:text="${offre.dateCreation}">2026-10-21</td>
+                            <td th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}">Non renseignée</td>
+                            <td th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</td>
+                            <td><span class="badge" th:text="${offre.statut}">OUVERTE</span></td>
+                            <td>
+                                <a class="action-link"
+                                   th:href="@{/rh/offres/{id}(id=${offre.id})}"
+                                   href="#">Voir</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="empty-state" th:if="${#lists.isEmpty(offres)}">
+                Aucune offre d'emploi enregistrée.
+            </p>
+        </section>
+    </main>
+</body>
+</html>
