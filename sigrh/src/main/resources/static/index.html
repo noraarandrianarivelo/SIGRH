@@ -241,7 +241,7 @@
         });
     }
 
-    async function soumettre(id) {
+    async function soumettre(id) { 
         if (!confirm('Soumettre cette demande ? Elle ne sera plus modifiable.')) return;
         try { await api('/api/recrutement/demandes/' + id + '/soumettre', { method: 'PUT' }); await chargerDemandes(); }
         catch (err) { alert(err.message); }
