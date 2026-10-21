@@ -193,19 +193,25 @@ CREATE TABLE proposition_embauche (
 -- et peuvent être ajustées avant signature : le contrat fait foi.
 CREATE TABLE contrat (
     id SERIAL PRIMARY KEY,
-    id_proposition INTEGER NOT NULL UNIQUE REFERENCES proposition_embauche(id),
+    id_proposition INTEGER UNIQUE REFERENCES proposition_embauche(id),
     id_employe VARCHAR(10) NOT NULL REFERENCES employe(id),
+    id_contrat_precedent INTEGER REFERENCES contrat(id),
     id_poste INTEGER NOT NULL REFERENCES poste(id),
-    type_contrat VARCHAR(30) NOT NULL, -- CDI / CDD / ...
+    type_contrat VARCHAR(30) NOT NULL,
     date_debut DATE NOT NULL,
-    date_fin DATE, -- NULL si le contrat n'a pas de fin (CDI).
+    date_fin DATE,
+    date_signature DATE,
     salaire_mensuel NUMERIC(14,2) NOT NULL CHECK (salaire_mensuel >= 0),
     horaires VARCHAR(150),
     lieu_travail VARCHAR(150),
-    conditions TEXT, -- Conditions prévues par l'entreprise.
+    conditions TEXT,
     date_creation DATE NOT NULL DEFAULT CURRENT_DATE,
-    statut VARCHAR(20) NOT NULL DEFAULT 'BROUILLON', -- BROUILLON / SIGNE / TERMINE / ANNULE
-    CHECK (date_fin IS NULL OR date_fin >= date_debut)
+    statut VARCHAR(20) NOT NULL DEFAULT 'BROUILLON' CHECK (statut IN ('BROUILLON', 'SIGNE', 'TERMINE', 'ANNULE')),
+    CHECK (date_fin IS NULL OR date_fin >= date_debut),
+    CHECK (
+        id_contrat_precedent IS NULL
+        OR id_contrat_precedent <> id
+    )
 );
 
 -- Documents associés au contrat, dont le PDF généré.
@@ -223,12 +229,13 @@ CREATE TABLE document_contrat (
 CREATE TABLE affectation (
     id SERIAL PRIMARY KEY,
     id_employe VARCHAR(10) NOT NULL REFERENCES employe(id),
-    id_contrat INTEGER REFERENCES contrat(id), -- Contrat à l'origine de l'affectation.
+    -- Contrat à l'origine de cette affectation.
+    id_contrat INTEGER REFERENCES contrat(id),
+    -- Le département se retrouve via poste.id_departement.
     id_poste INTEGER NOT NULL REFERENCES poste(id),
-    id_departement INTEGER NOT NULL REFERENCES departement(id),
     lieu VARCHAR(150),
     date_debut DATE NOT NULL,
-    date_fin DATE, -- NULL = affectation en cours.
+    date_fin DATE,
     motif TEXT,
     CHECK (date_fin IS NULL OR date_fin >= date_debut)
 );
