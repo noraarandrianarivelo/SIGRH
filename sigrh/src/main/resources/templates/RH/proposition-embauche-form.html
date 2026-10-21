@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Proposition d'embauche — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+    <main class="container form-container">
+        <a class="back-link" th:href="@{/rh/candidatures/{id}(id=${candidature.id})}" href="#">← Retour à la candidature</a>
+        <section class="panel">
+            <p class="eyebrow">Proposition d'embauche</p>
+            <h1>
+                <span th:text="${candidature.candidat.prenom}">Prénom</span>
+                <span th:text="${candidature.candidat.nom}">Nom</span>
+            </h1>
+            <p class="muted">Offre : <span th:text="${candidature.offre.titre}">Poste</span></p>
+            <form class="upload-form"
+                  th:action="@{/rh/candidatures/{id}/proposition(id=${candidature.id})}" method="post">
+                <div class="form-field">
+                    <label for="salaireMensuel">Salaire mensuel proposé *</label>
+                    <input id="salaireMensuel" name="salaireMensuel" type="number" min="0" step="0.01"
+                           th:value="${salaireInitial}" required>
+                </div>
+                <div class="form-field">
+                    <label for="dateDebutPrevue">Date de début prévue *</label>
+                    <input id="dateDebutPrevue" name="dateDebutPrevue" type="date"
+                           th:value="${dateDebutInitiale != null ? #temporals.format(dateDebutInitiale, 'yyyy-MM-dd') : ''}"
+                           required>
+                    <small th:if="${dateDebutInitiale == null}">
+                        Aucune date d'arrivée souhaitée n'a été renseignée dans la demande de recrutement.
+                    </small>
+                </div>
+                <div class="form-field">
+                    <label for="typeContrat">Type de contrat *</label>
+                    <select id="typeContrat" name="typeContrat" required>
+                        <option value="CE" th:selected="${typeContratInitial == 'CE'}">CE</option>
+                        <option value="CDI">CDI</option>
+                        <option value="CDD">CDD</option>
+                        <option value="STAGE">Stage</option>
+                        <option value="AUTRE">Autre</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="horaires">Horaires</label>
+                    <input id="horaires" name="horaires" type="text" placeholder="08h00 - 17h00">
+                </div>
+                <div class="form-field">
+                    <label for="lieuTravail">Lieu de travail</label>
+                    <input id="lieuTravail" name="lieuTravail" type="text">
+                </div>
+                <div class="form-field">
+                    <label for="autresConditions">Autres conditions</label>
+                    <textarea id="autresConditions" name="autresConditions" rows="5"
+                              placeholder="Avantages, période d'essai, conditions particulières..."></textarea>
+                </div>
+                <button class="button" type="submit">Envoyer la proposition</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
