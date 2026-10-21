@@ -241,7 +241,10 @@ tbody tr:last-child td {
 }
 
 .form-field input[type="file"],
-.form-field textarea {
+.form-field input[type="text"],
+.form-field input[type="datetime-local"],
+.form-field textarea,
+.form-field select {
     width: 100%;
     padding: 0.7rem;
     border: 1px solid var(--line);
