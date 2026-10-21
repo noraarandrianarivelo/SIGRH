@@ -40,6 +40,30 @@ public class CandidatureService {
         return repository.findById(id);
     }
 
+    public Optional<Path> trouverFichier(String nom) {
+        if (!StringUtils.hasText(nom)) {
+            return Optional.empty();
+        }
+        Path fichier = uploadDirectory.resolve(nom).normalize();
+        return fichier.startsWith(uploadDirectory) && Files.isRegularFile(fichier)
+                ? Optional.of(fichier)
+                : Optional.empty();
+    }
+
+    public boolean estAffichable(String nom) {
+        if (nom == null) {
+            return false;
+        }
+        String nomMinuscule = nom.toLowerCase();
+        return nomMinuscule.endsWith(".pdf")
+                || nomMinuscule.endsWith(".png")
+                || nomMinuscule.endsWith(".jpg")
+                || nomMinuscule.endsWith(".jpeg")
+                || nomMinuscule.endsWith(".gif")
+                || nomMinuscule.endsWith(".webp")
+                || nomMinuscule.endsWith(".txt");
+    }
+
     public Candidature creer(Candidat candidat, OffreEmploi offre, MultipartFile cv,
             MultipartFile lettreEncouragement, String message) {
         if (cv == null || cv.isEmpty()) {

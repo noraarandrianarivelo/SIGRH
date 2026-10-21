@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -70,6 +71,18 @@ class CandidatureServiceTests {
         try (var fichiers = Files.list(uploadDirectory)) {
             assertFalse(fichiers.findAny().isPresent());
         }
+    }
+
+    @Test
+    void neRetourneQueLesFichiersDuDossierDeCandidatures() throws IOException {
+        CandidatureService service = new CandidatureService(mock(CandidatureRepository.class), uploadDirectory.toString());
+        Path cv = Files.writeString(uploadDirectory.resolve("cv.pdf"), "cv");
+        Files.writeString(uploadDirectory.resolveSibling("secret.txt"), "secret");
+
+        assertEquals(Optional.of(cv), service.trouverFichier("cv.pdf"));
+        assertEquals(Optional.empty(), service.trouverFichier("../secret.txt"));
+        assertTrue(service.estAffichable("cv.pdf"));
+        assertFalse(service.estAffichable("cv.docx"));
     }
 
     private Candidat candidat(Integer id) {

@@ -41,7 +41,9 @@ public class SecurityConfig {
             // Les appels fetch() de la page n'envoient pas de jeton CSRF : sans cette ligne,
             // tous les POST/PUT sont refusés en 403.
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/rh/**").hasAnyAuthority(Roles.RH, Roles.DIRECTION)
                 // Données de référence : seule la RH (ou la Direction) peut en ajouter.
                 .requestMatchers(HttpMethod.POST, "/api/postes", "/api/departements", "/api/grilles-salaires")
                     .hasAnyAuthority(Roles.RH, Roles.DIRECTION)

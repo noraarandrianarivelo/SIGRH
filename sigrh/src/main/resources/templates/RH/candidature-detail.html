@@ -80,6 +80,41 @@
                 Message accompagnant la candidature.
             </p>
         </section>
+
+        <section class="panel" aria-labelledby="documents-title">
+            <h2 id="documents-title">Documents</h2>
+            <div class="document-grid">
+                <article class="document-card">
+                    <h3>CV</h3>
+                    <iframe class="document-preview"
+                            th:if="${cvAffichable}"
+                            th:src="@{/rh/candidatures/{id}/cv(id=${candidature.id})}"
+                            title="Aperçu du CV"></iframe>
+                    <a class="action-link"
+                       th:href="@{/rh/candidatures/{id}/cv(id=${candidature.id})}"
+                       th:text="${cvAffichable ? 'Ouvrir le CV' : 'Télécharger le CV'}"
+                       target="_blank"
+                       rel="noopener">Télécharger le CV</a>
+                </article>
+
+                <article class="document-card" th:if="${candidature.lettreMotivation != null}">
+                    <h3>Lettre de motivation</h3>
+                    <iframe class="document-preview"
+                            th:if="${lettreAffichable}"
+                            th:src="@{/rh/candidatures/{id}/lettre-motivation(id=${candidature.id})}"
+                            title="Aperçu de la lettre de motivation"></iframe>
+                    <a class="action-link"
+                       th:href="@{/rh/candidatures/{id}/lettre-motivation(id=${candidature.id})}"
+                       th:text="${lettreAffichable ? 'Ouvrir la lettre' : 'Télécharger la lettre'}"
+                       target="_blank"
+                       rel="noopener">Télécharger la lettre</a>
+                </article>
+
+                <p class="muted" th:if="${candidature.lettreMotivation == null}">
+                    Aucune lettre de motivation fournie.
+                </p>
+            </div>
+        </section>
     </main>
 </body>
 </html>
