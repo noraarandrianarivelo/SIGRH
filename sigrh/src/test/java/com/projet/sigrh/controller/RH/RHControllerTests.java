@@ -31,6 +31,7 @@ import com.projet.sigrh.model.TestRecrutement;
 import com.projet.sigrh.service.CandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
 import com.projet.sigrh.service.SeanceEvaluationService;
+import com.projet.sigrh.repository.EmployeRepository.EvaluateurOption;
 
 class RHControllerTests {
 
@@ -135,7 +136,7 @@ class RHControllerTests {
         CandidatureService candidatureService = mock(CandidatureService.class);
         SeanceEvaluationService evaluationService = mock(SeanceEvaluationService.class);
         Candidature candidature = new Candidature();
-        List<Employe> evaluateurs = List.of(new Employe());
+        List<EvaluateurOption> evaluateurs = List.of(mock(EvaluateurOption.class));
         List<TestRecrutement> tests = List.of(new TestRecrutement());
         ConcurrentModel model = new ConcurrentModel();
         when(candidatureService.findById(5)).thenReturn(Optional.of(candidature));
