@@ -144,6 +144,8 @@
                                             th:disabled="${ligne.candidature.statut == 'RETENUE'}">Retenir</button>
                                     <button class="button button--secondary" type="submit" name="decision" value="REJETEE"
                                             th:disabled="${ligne.candidature.statut == 'REJETEE'}">Rejeter</button>
+                                    <button class="button button--secondary" type="submit" name="decision" value="RESERVE"
+                                            th:disabled="${ligne.candidature.statut == 'RESERVE'}">Mettre en réserve</button>
                                 </form>
                             </td>
                             <td sec:authorize="!hasAuthority('ROLE_DIRECTION')" class="muted">

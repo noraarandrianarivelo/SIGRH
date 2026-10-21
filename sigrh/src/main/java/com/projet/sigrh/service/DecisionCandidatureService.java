@@ -26,6 +26,7 @@ import com.projet.sigrh.security.Roles;
 public class DecisionCandidatureService {
     private static final String RETENUE = "RETENUE";
     private static final String REJETEE = "REJETEE";
+    private static final String RESERVE = "RESERVE";
 
     private final CandidatureRepository candidatureRepository;
     private final DecisionCandidatureRepository decisionRepository;
@@ -62,8 +63,9 @@ public class DecisionCandidatureService {
                 .orElseThrow(() -> new BusinessException("Candidature introuvable", HttpStatus.NOT_FOUND));
 
         String decisionLabel = request == null ? null : normaliser(request.decision());
-        if (!RETENUE.equals(decisionLabel) && !REJETEE.equals(decisionLabel)) {
-            throw new BusinessException("La décision doit être RETENUE ou REJETEE.");
+        if (!RETENUE.equals(decisionLabel) && !REJETEE.equals(decisionLabel)
+                && !RESERVE.equals(decisionLabel)) {
+            throw new BusinessException("La décision doit être RESERVE, RETENUE ou REJETEE.");
         }
         if (request == null || request.motif() == null || request.motif().isBlank()) {
             throw new BusinessException("Le motif de la décision est obligatoire.");

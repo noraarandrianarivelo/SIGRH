@@ -51,6 +51,16 @@ class DecisionCandidatureServiceTests {
                 new DecisionCandidatureRequest("RETENUE", "Profil retenu"), direction()));
     }
 
+    @Test
+    void autoriseLaMiseEnReserveAvantLaDecisionFinale() {
+        CandidatureRepository candidatureRepository = mock(CandidatureRepository.class);
+        Candidature candidature = candidature(12, 5);
+        when(candidatureRepository.findById(12)).thenReturn(Optional.of(candidature));
+
+        assertDoesNotThrow(() -> service(candidatureRepository, decisionRepository()).decider(12,
+                new DecisionCandidatureRequest("RESERVE", "Décision finale à compléter"), direction()));
+    }
+
     private DecisionCandidatureService service(CandidatureRepository candidatureRepository,
             DecisionCandidatureRepository decisionRepository) {
         return new DecisionCandidatureService(candidatureRepository, decisionRepository,
