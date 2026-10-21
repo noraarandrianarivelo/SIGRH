@@ -35,7 +35,9 @@
                         <option value="">Sélectionner un employé</option>
                         <option th:each="employe : ${evaluateurs}"
                                 th:value="${employe.id}"
-                                th:text="${employe.nomComplet}">Nom de l'employé</option>
+                                th:text="${employe.nomComplet + ' — ' + employe.poste}">
+                            Nom de l'employé — poste
+                        </option>
                     </select>
                 </div>
 

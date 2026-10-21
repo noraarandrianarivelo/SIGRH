@@ -15,6 +15,7 @@ import com.projet.sigrh.model.FicheNoteEvaluation;
 import com.projet.sigrh.model.SeanceEvaluation;
 import com.projet.sigrh.model.TestRecrutement;
 import com.projet.sigrh.repository.EmployeRepository;
+import com.projet.sigrh.repository.EmployeRepository.EvaluateurOption;
 import com.projet.sigrh.repository.FicheNoteEvaluationRepository;
 import com.projet.sigrh.repository.SeanceEvaluationRepository;
 import com.projet.sigrh.repository.TestRecrutementRepository;
@@ -38,8 +39,8 @@ public class SeanceEvaluationService {
         this.ficheRepository = ficheRepository;
     }
 
-    public List<Employe> listerEvaluateurs() {
-        return employeRepository.findAll();
+    public List<EvaluateurOption> listerEvaluateurs() {
+        return employeRepository.findEvaluateursAvecPoste();
     }
 
     public List<TestRecrutement> listerTests() {
