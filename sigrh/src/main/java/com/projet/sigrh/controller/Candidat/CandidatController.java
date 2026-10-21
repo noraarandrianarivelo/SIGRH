@@ -1,6 +1,7 @@
 package com.projet.sigrh.controller.Candidat;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import com.projet.sigrh.model.Candidat;
 import com.projet.sigrh.model.OffreEmploi;
 import com.projet.sigrh.service.CandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
+import com.projet.sigrh.service.PropositionEmbaucheService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -21,16 +23,47 @@ import jakarta.servlet.http.HttpSession;
 public class CandidatController {
     private final OffreEmploiService offreEmploiService;
     private final CandidatureService candidatureService;
+    private final PropositionEmbaucheService propositionService;
 
     public CandidatController(OffreEmploiService offreEmploiService, CandidatureService candidatureService) {
+        this(offreEmploiService, candidatureService, null);
+    }
+
+    @Autowired
+    public CandidatController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            PropositionEmbaucheService propositionService) {
         this.offreEmploiService = offreEmploiService;
         this.candidatureService = candidatureService;
+        this.propositionService = propositionService;
     }
 
     @GetMapping("/candidat/offre-emploi")
     public String afficherOffres(Model model) {
         model.addAttribute("offres", offreEmploiService.findByStatut("OUVERT"));
         return "Candidat/offre-list";
+    }
+
+    @GetMapping("/candidat/propositions")
+    public String afficherPropositions(Model model, HttpSession session) {
+        if (propositionService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de proposition n'est pas configuré");
+        }
+        model.addAttribute("propositions", propositionService.propositionsDuCandidat(candidatConnecte(session)));
+        return "Candidat/proposition-list";
+    }
+
+    @PostMapping("/candidat/propositions/{id}/reponse")
+    public String repondreProposition(@PathVariable Integer id,
+            @RequestParam String statut,
+            @RequestParam(required = false) String message,
+            HttpSession session) {
+        if (propositionService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de proposition n'est pas configuré");
+        }
+        propositionService.repondre(id, candidatConnecte(session), statut, message);
+        return "redirect:/candidat/propositions?reponse=enregistree";
     }
 
     @GetMapping("/candidat/offre-emploi/{id}")

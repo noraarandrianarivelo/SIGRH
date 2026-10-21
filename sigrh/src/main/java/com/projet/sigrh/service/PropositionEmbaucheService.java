@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,10 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.projet.sigrh.dto.PropositionEmbaucheRequest;
 import com.projet.sigrh.exception.BusinessException;
 import com.projet.sigrh.model.Candidature;
+import com.projet.sigrh.model.Candidat;
+import com.projet.sigrh.model.Employe;
 import com.projet.sigrh.model.PropositionEmbauche;
 import com.projet.sigrh.model.Utilisateur;
 import com.projet.sigrh.repository.PropositionEmbaucheRepository;
 import com.projet.sigrh.repository.DemandeRecrutementRepository;
+import com.projet.sigrh.repository.EmployeRepository;
 import com.projet.sigrh.security.Roles;
 
 @Service
@@ -24,11 +28,13 @@ public class PropositionEmbaucheService {
 
     private final PropositionEmbaucheRepository repository;
     private final DemandeRecrutementRepository demandeRepository;
+    private final EmployeRepository employeRepository;
 
     public PropositionEmbaucheService(PropositionEmbaucheRepository repository,
-            DemandeRecrutementRepository demandeRepository) {
+            DemandeRecrutementRepository demandeRepository, EmployeRepository employeRepository) {
         this.repository = repository;
         this.demandeRepository = demandeRepository;
+        this.employeRepository = employeRepository;
     }
 
     public BigDecimal salaireInitial(Candidature candidature) {
@@ -44,6 +50,68 @@ public class PropositionEmbaucheService {
     @Transactional(readOnly = true)
     public Optional<PropositionEmbauche> propositionActive(Integer candidatureId) {
         return repository.findFirstByCandidatureIdAndStatutInOrderByDateEnvoiDesc(candidatureId, STATUTS_BLOQUANTS);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropositionEmbauche> propositionsDuCandidat(Candidat candidat) {
+        if (candidat == null || candidat.id == null) {
+            throw new BusinessException("Candidat non connecté.", HttpStatus.UNAUTHORIZED);
+        }
+        return repository.findByCandidatureCandidatIdOrderByDateEnvoiDesc(candidat.id);
+    }
+
+    @Transactional
+    public void repondre(Integer propositionId, Candidat candidat, String statut, String message) {
+        if (candidat == null || candidat.id == null) {
+            throw new BusinessException("Candidat non connecté.", HttpStatus.UNAUTHORIZED);
+        }
+        PropositionEmbauche proposition = repository.findById(propositionId)
+                .orElseThrow(() -> new BusinessException("Proposition introuvable.", HttpStatus.NOT_FOUND));
+        if (proposition.candidature.candidat == null
+                || !candidat.id.equals(proposition.candidature.candidat.id)) {
+            throw new BusinessException("Cette proposition ne vous est pas destinée.", HttpStatus.FORBIDDEN);
+        }
+        if (!"EN_ATTENTE".equals(proposition.statut)) {
+            throw new BusinessException("Cette proposition a déjà reçu une réponse.", HttpStatus.CONFLICT);
+        }
+        if (!"ACCEPTEE".equals(statut) && !"REFUSEE".equals(statut)) {
+            throw new BusinessException("La réponse doit être ACCEPTEE ou REFUSEE.");
+        }
+        proposition.statut = statut;
+        proposition.dateReponse = java.time.LocalDateTime.now();
+        proposition.messageReponse = message == null || message.isBlank() ? null : message.trim();
+        if ("ACCEPTEE".equals(statut)) {
+            creerEmploye(proposition.candidature);
+        }
+        repository.save(proposition);
+    }
+
+    private Employe creerEmploye(Candidature candidature) {
+        if (candidature.candidat == null || candidature.candidat.nom == null
+                || candidature.candidat.nom.isBlank()) {
+            throw new BusinessException("Le candidat doit avoir un nom pour devenir employé.");
+        }
+
+        Employe employe = new Employe();
+        employe.setId(genererMatricule());
+        employe.setNom(candidature.candidat.nom.trim());
+        employe.setPrenom(texteOptionnel(candidature.candidat.prenom));
+        if (candidature.offre != null && candidature.offre.besoinPoste != null
+                && candidature.offre.besoinPoste.getPoste() != null) {
+            employe.setDepartement(candidature.offre.besoinPoste.getPoste().getDepartement());
+        }
+        return employeRepository.save(employe);
+    }
+
+    private String genererMatricule() {
+        for (int tentative = 0; tentative < 10; tentative++) {
+            String matricule = "EMP" + String.format("%07d",
+                    ThreadLocalRandom.current().nextInt(10_000_000));
+            if (!employeRepository.existsById(matricule)) {
+                return matricule;
+            }
+        }
+        throw new BusinessException("Impossible de générer un matricule unique.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Transactional

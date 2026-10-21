@@ -21,6 +21,7 @@
                     <p class="eyebrow">Recrutement</p>
                     <h1 id="offres-title">Offres d'emploi</h1>
                 </div>
+                <a class="action-link" th:href="@{/candidat/propositions}" href="#">Mes propositions</a>
             </header>
 
             <div class="table-wrap" th:if="${!#lists.isEmpty(offres)}">
