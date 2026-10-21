@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Évaluer une séance — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+
+    <main class="container form-container">
+        <a class="back-link"
+           th:href="@{/rh/evaluations/{id}(id=${seance.id})}"
+           href="#">← Retour à la séance</a>
+
+        <section class="panel" aria-labelledby="notation-title">
+            <p class="eyebrow" th:text="|Séance nº ${seance.id}|">Séance nº 1</p>
+            <h1 id="notation-title">Évaluer la séance</h1>
+
+            <form class="upload-form"
+                  th:action="@{/rh/evaluations/{id}/evaluer(id=${seance.id})}"
+                  method="post">
+                <div class="form-field" th:if="${seance.dateEntretien != null}">
+                    <label for="noteEntretien">Note de l'entretien</label>
+                    <input id="noteEntretien" name="noteEntretien" type="number"
+                           min="0" max="20" step="0.01">
+                    <small>Note comprise entre 0 et 20.</small>
+                </div>
+
+                <div class="form-field" th:if="${seance.test != null}">
+                    <label for="noteTest">Note du test</label>
+                    <input id="noteTest" name="noteTest" type="number"
+                           min="0" max="20" step="0.01">
+                    <small>Note comprise entre 0 et 20.</small>
+                </div>
+
+                <div class="form-field">
+                    <label for="commentaire">Commentaire</label>
+                    <textarea id="commentaire" name="commentaire" rows="5"></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label for="avis">Avis *</label>
+                    <select id="avis" name="avis" required>
+                        <option value="">Sélectionner un avis</option>
+                        <option value="FAVORABLE">Favorable</option>
+                        <option value="RESERVE">Réservé</option>
+                        <option value="DEFAVORABLE">Défavorable</option>
+                    </select>
+                </div>
+
+                <button class="button" type="submit">Enregistrer l'évaluation</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

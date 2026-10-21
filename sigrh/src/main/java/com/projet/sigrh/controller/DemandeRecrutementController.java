@@ -50,7 +50,7 @@ public class DemandeRecrutementController {
         return demandeService.modifier(id, request, utilisateurService.getConnecte(principal));
     }
 
-    @PutMapping("/{id}/soumettre")
+    @PutMapping("/{id}/soumettre") 
     public DemandeResponse soumettre(@PathVariable Long id, Principal principal) {
         return demandeService.soumettre(id, utilisateurService.getConnecte(principal));
     }

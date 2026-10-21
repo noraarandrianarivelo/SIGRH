@@ -17,6 +17,8 @@
     <main class="container">
         <a class="back-link" th:href="@{/rh/evaluations}" href="#">← Retour aux séances</a>
 
+        <p class="success-message" th:if="${param.note}">L'évaluation a été enregistrée.</p>
+
         <section class="panel" aria-labelledby="evaluation-title">
             <header class="title-row">
                 <div>
@@ -78,6 +80,12 @@
                     </dd>
                 </div>
             </dl>
+
+            <a class="button"
+               th:unless="${dejaEvaluee}"
+               th:href="@{/rh/evaluations/{id}/evaluer(id=${seance.id})}"
+               href="#">Évaluer</a>
+            <p class="muted" th:if="${dejaEvaluee}">Cette séance a déjà été évaluée.</p>
         </section>
     </main>
 </body>

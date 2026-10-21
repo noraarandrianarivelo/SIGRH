@@ -1,22 +1,34 @@
 package com.projet.sigrh.service;
 
-import com.projet.sigrh.dto.DecisionRequest;
-import com.projet.sigrh.dto.DemandeResponse;
-import com.projet.sigrh.exception.BusinessException;
-import com.projet.sigrh.model.*;
-import com.projet.sigrh.model.enums.DecisionValidation;
-import com.projet.sigrh.model.enums.EtapeValidation;
-import com.projet.sigrh.repository.DemandeRecrutementRepository;
-import com.projet.sigrh.repository.HistoriqueValidationRepository;
-import com.projet.sigrh.repository.PosteRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import com.projet.sigrh.dto.DecisionRequest;
+import com.projet.sigrh.dto.DemandeResponse;
+import com.projet.sigrh.exception.BusinessException;
+import com.projet.sigrh.model.Besoin;
+import com.projet.sigrh.model.BesoinPoste;
+import com.projet.sigrh.model.DemandeRecrutement;
+import com.projet.sigrh.model.HistoriqueValidation;
+import com.projet.sigrh.model.OffreEmploi;
+import com.projet.sigrh.model.Poste;
+import com.projet.sigrh.model.Utilisateur;
+import com.projet.sigrh.model.enums.DecisionValidation;
+import com.projet.sigrh.model.enums.EtapeValidation;
+import com.projet.sigrh.model.enums.StatutDemande;
+import com.projet.sigrh.repository.DemandeRecrutementRepository;
+import com.projet.sigrh.repository.HistoriqueValidationRepository;
+import com.projet.sigrh.repository.OffreEmploiRepository;
+import com.projet.sigrh.repository.PosteRepository;
 
 /** Bloc 1 : décisions RH, Finance et Direction, avec une ligne d'historique par décision. */
 @Service
@@ -30,6 +42,8 @@ public class ValidationService {
     private HistoriqueValidationRepository historiqueRepository;
     @Autowired
     private PosteRepository posteRepository;
+    @Autowired
+    private OffreEmploiRepository offreEmploiRepository;
 
     @Transactional
     public DemandeResponse decider(Long idDemande, DecisionRequest req, Utilisateur u) {
@@ -72,7 +86,32 @@ public class ValidationService {
         historiqueRepository.save(h);
 
         d.setStatut(WorkflowDemande.statutApresDecision(d, etape, decision));
-        return demandeService.toResponse(demandeRepository.save(d), u);
+        DemandeRecrutement demandeEnregistree = demandeRepository.save(d);
+        if (d.getStatut() == StatutDemande.VALIDEE) {
+            creerOffres(d);
+        }
+        return demandeService.toResponse(demandeEnregistree, u);
+    }
+
+    private void creerOffres(DemandeRecrutement d) {
+        LocalDate dateCreation = LocalDate.now();
+        List<OffreEmploi> offres = new ArrayList<>();
+        for (BesoinPoste ligne : d.getBesoin().getLignes()) {
+            if (offreEmploiRepository.existsByBesoinPosteId(ligne.getId())) {
+                continue;
+            }
+            OffreEmploi offre = new OffreEmploi();
+            offre.besoinPoste = ligne;
+            offre.titre = ligne.getPoste() == null
+                    ? ligne.getLibellePostePropose()
+                    : ligne.getPoste().getLibelle();
+            offre.description = d.getBesoin().getMotif();
+            offre.dateCreation = dateCreation;
+            offre.dateLimite = d.getDateArriveeSouhaitee();
+            offre.statut = "OUVERT";
+            offres.add(offre);
+        }
+        offreEmploiRepository.saveAll(offres);
     }
 
     /** Le budget unitaire de chaque poste existant doit rester entre salaire_min et salaire_max. */

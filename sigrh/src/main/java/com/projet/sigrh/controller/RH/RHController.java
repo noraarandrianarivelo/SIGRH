@@ -1,6 +1,7 @@
 package com.projet.sigrh.controller.RH;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.projet.sigrh.model.Candidature;
+import com.projet.sigrh.model.SeanceEvaluation;
 import com.projet.sigrh.service.CandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
 import com.projet.sigrh.service.SeanceEvaluationService;
@@ -61,10 +63,28 @@ public class RHController {
 
     @GetMapping("/rh/evaluations/{id}")
     public String afficherEvaluation(@PathVariable Integer id, Model model) {
-        model.addAttribute("seance", seanceEvaluationService.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Séance d'évaluation introuvable")));
+        model.addAttribute("seance", trouverSeance(id));
+        model.addAttribute("dejaEvaluee", seanceEvaluationService.estEvaluee(id));
         return "RH/seance-evaluation-detail";
+    }
+
+    @GetMapping("/rh/evaluations/{id}/evaluer")
+    public String afficherFormulaireNotation(@PathVariable Integer id, Model model) {
+        if (seanceEvaluationService.estEvaluee(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette séance a déjà été évaluée");
+        }
+        model.addAttribute("seance", trouverSeance(id));
+        return "RH/fiche-note-evaluation-form";
+    }
+
+    @PostMapping("/rh/evaluations/{id}/evaluer")
+    public String evaluer(@PathVariable Integer id,
+            @RequestParam(required = false) BigDecimal noteEntretien,
+            @RequestParam(required = false) BigDecimal noteTest,
+            @RequestParam(required = false) String commentaire,
+            @RequestParam String avis) {
+        seanceEvaluationService.evaluer(id, noteEntretien, noteTest, commentaire, avis);
+        return "redirect:/rh/evaluations/" + id + "?note=enregistree";
     }
 
     @GetMapping("/rh/candidatures/{id}")
@@ -115,6 +135,12 @@ public class RHController {
     private Candidature trouverCandidature(Integer id) {
         return candidatureService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Candidature introuvable"));
+    }
+
+    private SeanceEvaluation trouverSeance(Integer id) {
+        return seanceEvaluationService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Séance d'évaluation introuvable"));
     }
 
     private ResponseEntity<Resource> servirFichier(String nom) throws IOException {

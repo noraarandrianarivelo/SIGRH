@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -188,12 +189,14 @@ class RHControllerTests {
         SeanceEvaluation seance = new SeanceEvaluation();
         ConcurrentModel model = new ConcurrentModel();
         when(evaluationService.findById(4)).thenReturn(Optional.of(seance));
+        when(evaluationService.estEvaluee(4)).thenReturn(true);
 
         String vue = new RHController(mock(OffreEmploiService.class), mock(CandidatureService.class),
                 evaluationService).afficherEvaluation(4, model);
 
         assertEquals("RH/seance-evaluation-detail", vue);
         assertSame(seance, model.get("seance"));
+        assertEquals(true, model.get("dejaEvaluee"));
     }
 
     @Test
@@ -206,6 +209,33 @@ class RHControllerTests {
                         evaluationService).afficherEvaluation(4, new ConcurrentModel()));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    }
+
+    @Test
+    void afficheLeFormulaireDeNotation() {
+        SeanceEvaluationService evaluationService = mock(SeanceEvaluationService.class);
+        SeanceEvaluation seance = new SeanceEvaluation();
+        ConcurrentModel model = new ConcurrentModel();
+        when(evaluationService.findById(4)).thenReturn(Optional.of(seance));
+
+        String vue = new RHController(mock(OffreEmploiService.class), mock(CandidatureService.class),
+                evaluationService).afficherFormulaireNotation(4, model);
+
+        assertEquals("RH/fiche-note-evaluation-form", vue);
+        assertSame(seance, model.get("seance"));
+    }
+
+    @Test
+    void enregistreLaFicheDeNotation() {
+        SeanceEvaluationService evaluationService = mock(SeanceEvaluationService.class);
+        BigDecimal noteEntretien = new BigDecimal("15.50");
+        BigDecimal noteTest = new BigDecimal("17.25");
+
+        String vue = new RHController(mock(OffreEmploiService.class), mock(CandidatureService.class),
+                evaluationService).evaluer(4, noteEntretien, noteTest, "Bon profil", "FAVORABLE");
+
+        assertEquals("redirect:/rh/evaluations/4?note=enregistree", vue);
+        verify(evaluationService).evaluer(4, noteEntretien, noteTest, "Bon profil", "FAVORABLE");
     }
 
     private RHController controller(OffreEmploiService offreService, CandidatureService candidatureService) {
