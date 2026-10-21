@@ -256,7 +256,7 @@ CREATE TABLE utilisateur (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     id_role INTEGER NOT NULL REFERENCES role_user(id),
-    id_employee INTEGER UNIQUE REFERENCES employe(id),
+    id_employee VARCHAR(10) UNIQUE REFERENCES employe(id),
     date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${'Candidature #' + candidature.id + ' — SIGRH'}">Détail de la candidature — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <a class="back-link"
+           th:href="@{/rh/offres/{id}(id=${candidature.offre.id})}"
+           href="#">← Retour à l'offre</a>
+
+        <article class="panel">
+            <header class="title-row">
+                <div>
+                    <p class="eyebrow">Candidature</p>
+                    <h1>
+                        <span th:text="${candidature.candidat.prenom}">Prénom</span>
+                        <span th:text="${candidature.candidat.nom}">Nom</span>
+                    </h1>
+                </div>
+                <span class="badge" th:text="${candidature.statut}">RECUE</span>
+            </header>
+
+            <dl class="detail-grid">
+                <div>
+                    <dt>Référence</dt>
+                    <dd th:text="${candidature.id}">1</dd>
+                </div>
+                <div>
+                    <dt>Date de candidature</dt>
+                    <dd th:text="${candidature.dateCandidature}">2026-10-21T10:00</dd>
+                </div>
+                <div>
+                    <dt>Offre</dt>
+                    <dd th:text="${candidature.offre.titre}">Titre de l'offre</dd>
+                </div>
+            </dl>
+        </article>
+
+        <section class="panel" aria-labelledby="candidate-title">
+            <h2 id="candidate-title">Informations du candidat</h2>
+            <dl class="detail-grid">
+                <div>
+                    <dt>E-mail</dt>
+                    <dd th:text="${candidature.candidat.email}">candidat@example.com</dd>
+                </div>
+                <div>
+                    <dt>Téléphone</dt>
+                    <dd th:text="${candidature.candidat.telephone != null ? candidature.candidat.telephone : 'Non renseigné'}">Non renseigné</dd>
+                </div>
+                <div>
+                    <dt>Date de naissance</dt>
+                    <dd th:text="${candidature.candidat.dateNaissance != null ? candidature.candidat.dateNaissance : 'Non renseignée'}">Non renseignée</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="qualifications-title">
+            <h2 id="qualifications-title">Qualifications</h2>
+            <p class="description"
+               th:text="${candidature.candidat.qualifications != null ? candidature.candidat.qualifications : 'Aucune qualification renseignée.'}">
+                Qualifications du candidat.
+            </p>
+        </section>
+
+        <section class="panel" aria-labelledby="message-title">
+            <h2 id="message-title">Message</h2>
+            <p class="description"
+               th:text="${candidature.message != null ? candidature.message : 'Aucun message.'}">
+                Message accompagnant la candidature.
+            </p>
+        </section>
+    </main>
+</body>
+</html>

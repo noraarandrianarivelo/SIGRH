@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SIGRH - Bloc 1 : ouverture de recrutement</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; background: #f4f6f9; color: #222; }
+        .barre { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 12px 18px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+        h1 { font-size: 20px; margin: 0; } h2 { font-size: 17px; }
+        section, .carte { background: #fff; padding: 14px 18px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-top: 18px; }
+        label { display: inline-block; margin: 4px 14px 4px 0; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+        th { background: #007bff; color: #fff; }
+        button { padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .d-APPROUVEE { background: #28a745; color: #fff; } .d-A_CORRIGER { background: #ffc107; } .d-REJETEE { background: #dc3545; color: #fff; }
+        .statut { font-weight: bold; } .alerte { color: #c00; }
+        ul { margin: 0; padding-left: 18px; } small { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="barre">
+        <h1>SIGRH - Bloc 1 : ouverture de recrutement</h1>
+        <div>
+            Connecté : <strong id="userConnected">...</strong>
+            <form method="post" action="/logout" style="display:inline"><button type="submit">Déconnexion</button></form>
+        </div>
+    </div>
+
+    <!-- Visible pour MANAGER et DIRECTION -->
+    <section id="sectionManager" hidden>
+        <h2 id="titreForm">Nouvelle demande de recrutement</h2>
+        <form id="formDemande">
+            <label>Département
+                <select id="departementId" onchange="changerDepartement()"></select>
+            </label>
+            <label>Type de motif
+                <select id="typeMotif">
+                    <option value="NOUVEAU_POSTE">Nouveau poste</option>
+                    <option value="REMPLACEMENT">Remplacement (licenciement, retrait, démission)</option>
+                    <option value="NOUVEAU_SERVICE">Nouveau service</option>
+                    <option value="AUTRE">Autre</option>
+                </select>
+            </label>
+            <label>Date d'arrivée souhaitée <input type="date" id="dateArrivee"></label>
+            <br>
+            <label style="width:90%">Motif précis
+                <input type="text" id="motif" style="width:70%" placeholder="Ex : renforcement de l'équipe backend">
+            </label>
+
+            <h3>Postes demandés</h3>
+            <table>
+                <thead><tr><th>Poste</th><th>Effectif</th><th>Budget mensuel unitaire (Ar)</th><th></th></tr></thead>
+                <tbody id="lignes"></tbody>
+            </table>
+            <button type="button" onclick="ajouterLigne()">+ Ajouter un poste</button>
+            <br><br>
+            <button type="submit" id="btnEnregistrer">Enregistrer le brouillon</button>
+            <button type="button" id="btnAnnuler" onclick="annulerModification()" hidden>Annuler la modification</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Demandes</h2>
+        <button onclick="chargerDemandes()">Rafraîchir</button>
+        <table id="tableDemandes">
+            <thead>
+                <tr><th>N°</th><th>Demandeur</th><th>Département</th><th>Motif</th><th>Postes</th><th>Arrivée</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+<script>
+    const STATUTS = { BROUILLON: 'Brouillon', ATTENTE_RH: 'En attente RH', ATTENTE_FINANCE: 'En attente Finance',
+        ATTENTE_DIRECTION: 'En attente Direction', A_CORRIGER: 'À corriger', VALIDEE: 'Validée', REJETEE: 'Rejetée' };
+    const DECISIONS = { APPROUVEE: 'Approuver', A_CORRIGER: 'Demander une correction', REJETEE: 'Rejeter' };
+    const MOTIFS = { NOUVEAU_POSTE: 'Nouveau poste', REMPLACEMENT: 'Remplacement', NOUVEAU_SERVICE: 'Nouveau service', AUTRE: 'Autre' };
+
+    let utilisateur = null;
+    let postes = [];          // postes du département choisi
+    let demandes = [];        // dernière liste reçue
+    let idEnModification = null;
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const nombre = n => Number(n).toLocaleString('fr-FR');
+    const date = s => s ? s.split('-').reverse().join('/') : '';
+    const dateHeure = s => s ? new Date(s).toLocaleString('fr-FR') : '';
+
+    // Appel JSON : renvoie les données ou lève une Error avec le message du serveur.
+    async function api(url, options = {}) {
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+        if (res.redirected && res.url.includes('/login')) { window.location.href = '/login'; throw new Error('Session expirée'); }
+        const texte = await res.text();
+        let data = null;
+        try { data = texte ? JSON.parse(texte) : null; } catch (e) { /* réponse non JSON */ }
+        if (!res.ok) throw new Error(data && data.message ? data.message : 'Erreur ' + res.status);
+        return data;
+    }
+
+    async function demarrer() {
+        try {
+            utilisateur = await api('/api/auth/current-user');
+            document.getElementById('userConnected').textContent = utilisateur.nom + ' (' + utilisateur.role + ')';
+            if (utilisateur.role === 'ROLE_MANAGER' || utilisateur.role === 'ROLE_DIRECTION') {
+                document.getElementById('sectionManager').hidden = false;
+                await chargerDepartements();
+            }
+            await chargerDemandes();
+        } catch (err) { alert(err.message); }
+    }
+
+    // ---------- Formulaire ----------
+    async function chargerDepartements() {
+        let deps = await api('/api/departements');
+        // Un manager ne peut créer que pour son département (RG) ; la Direction choisit librement.
+        if (utilisateur.role === 'ROLE_MANAGER') deps = deps.filter(d => d.id === utilisateur.departementId);
+        document.getElementById('departementId').innerHTML = deps.map(d => `<option value="${d.id}">${esc(d.libelle)}</option>`).join('');
+        await changerDepartement();
+    }
+
+    async function chargerPostes() {
+        const id = document.getElementById('departementId').value;
+        postes = id ? await api('/api/postes/departement/' + id) : [];
+    }
+
+    async function changerDepartement() {
+        await chargerPostes();
+        document.getElementById('lignes').innerHTML = '';
+        ajouterLigne();
+    }
+
+    function ajouterLigne(l = {}) {
+        const options = postes.map(p => `<option value="${p.id}" ${l.posteId === p.id ? 'selected' : ''}>${esc(p.libelle)}</option>`).join('');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><select class="l-poste" onchange="majLibelle(this)"><option value="">Nouveau poste à créer...</option>${options}</select>
+                <input class="l-libelle" placeholder="Libellé du nouveau poste" value="${esc(l.libellePostePropose || '')}"></td>
+            <td><input type="number" class="l-effectif" min="1" value="${l.effectif || 1}" style="width:70px"></td>
+            <td><input type="number" class="l-budget" min="0" step="1000" value="${l.budgetMensuelUnitaire ?? ''}"></td>
+            <td><button type="button" onclick="this.closest('tr').remove()">Retirer</button></td>`;
+        document.getElementById('lignes').appendChild(tr);
+        majLibelle(tr.querySelector('.l-poste'));
+    }
+
+    // Le champ « libellé » ne sert que si aucun poste existant n'est choisi.
+    function majLibelle(select) {
+        select.closest('tr').querySelector('.l-libelle').style.display = select.value ? 'none' : '';
+    }
+
+    function lireLignes() {
+        return [...document.querySelectorAll('#lignes tr')].map(tr => {
+            const poste = tr.querySelector('.l-poste').value;
+            const budget = tr.querySelector('.l-budget').value;
+            return {
+                posteId: poste ? Number(poste) : null,
+                libellePostePropose: tr.querySelector('.l-libelle').value,
+                effectif: Number(tr.querySelector('.l-effectif').value),
+                budgetMensuelUnitaire: budget === '' ? null : Number(budget)
+            };
+        });
+    }
+
+    document.getElementById('formDemande').addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {
+            departementId: Number(document.getElementById('departementId').value),
+            typeMotif: document.getElementById('typeMotif').value,
+            motif: document.getElementById('motif').value,
+            dateArriveeSouhaitee: document.getElementById('dateArrivee').value || null,
+            lignes: lireLignes()
+        };
+        try {
+            await api(idEnModification ? '/api/recrutement/demandes/' + idEnModification : '/api/recrutement/demandes',
+                { method: idEnModification ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            alert('Brouillon enregistré. Cliquez sur « Soumettre » dans la liste pour l\'envoyer.');
+            await annulerModification();
+            await chargerDemandes();
+        } catch (err) { alert(err.message); }
+    });
+
+    async function modifier(id) {
+        const d = demandes.find(x => x.id === id);
+        idEnModification = id;
+        document.getElementById('titreForm').textContent = 'Modifier la demande n° ' + id;
+        document.getElementById('btnEnregistrer').textContent = 'Enregistrer les modifications';
+        document.getElementById('btnAnnuler').hidden = false;
+        document.getElementById('departementId').value = d.departementId;
+        await chargerPostes();
+        document.getElementById('typeMotif').value = d.typeMotif;
+        document.getElementById('motif').value = d.motif;
+        document.getElementById('dateArrivee').value = d.dateArriveeSouhaitee || '';
+        document.getElementById('lignes').innerHTML = '';
+        d.lignes.forEach(l => ajouterLigne({ posteId: l.posteId, libellePostePropose: l.posteACreer ? l.poste : '', effectif: l.effectif, budgetMensuelUnitaire: l.budgetMensuelUnitaire }));
+        window.scrollTo(0, 0);
+    }
+
+    async function annulerModification() {
+        idEnModification = null;
+        document.getElementById('formDemande').reset();
+        document.getElementById('titreForm').textContent = 'Nouvelle demande de recrutement';
+        document.getElementById('btnEnregistrer').textContent = 'Enregistrer le brouillon';
+        document.getElementById('btnAnnuler').hidden = true;
+        await changerDepartement();
+    }
+
+    // ---------- Liste et actions ----------
+    async function chargerDemandes() {
+        try {
+            demandes = await api('/api/recrutement/demandes');
+            afficherDemandes();
+        } catch (err) { alert(err.message); }
+    }
+
+    function afficherDemandes() {
+        const tbody = document.querySelector('#tableDemandes tbody');
+        tbody.innerHTML = demandes.length ? '' : '<tr><td colspan="8">Aucune demande.</td></tr>';
+        demandes.forEach(d => {
+            const lignes = d.lignes.map(l => `<li>${esc(l.poste)}${l.posteACreer ? ' <em>(à créer)</em>' : ''}
+                x ${l.effectif} à ${nombre(l.budgetMensuelUnitaire)} Ar
+                ${l.grilleMin != null ? `<small>(grille ${nombre(l.grilleMin)} - ${nombre(l.grilleMax)})</small>` : ''}
+                ${l.conforme ? '' : '<strong class="alerte">hors grille</strong>'}</li>`).join('');
+            const histo = d.historique.length
+                ? `<details><summary>Historique (${d.historique.length})</summary><ul>`
+                  + d.historique.map(h => `<li>${dateHeure(h.date)} - ${h.etape} - ${esc(h.validateur)} : <strong>${h.decision}</strong>${h.commentaire ? ' - ' + esc(h.commentaire) : ''}</li>`).join('')
+                  + '</ul></details>' : '';
+            let actions = '';
+            if (d.peutModifier) actions += `<button onclick="modifier(${d.id})">Modifier</button><button onclick="soumettre(${d.id})">Soumettre</button>`;
+            d.decisionsPossibles.forEach(dec => actions += `<button class="d-${dec}" onclick="decider(${d.id}, '${dec}')">${DECISIONS[dec]}</button>`);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${d.id}</td><td>${esc(d.demandeur)}</td><td>${esc(d.departement)}</td>
+                <td>${MOTIFS[d.typeMotif]}<br><small>${esc(d.motif)}</small></td><td><ul>${lignes}</ul></td>
+                <td>${date(d.dateArriveeSouhaitee)}</td><td class="statut">${STATUTS[d.statut]}${histo}</td><td>${actions}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function soumettre(id) {
+        if (!confirm('Soumettre cette demande ? Elle ne sera plus modifiable.')) return;
+        try { await api('/api/recrutement/demandes/' + id + '/soumettre', { method: 'PUT' }); await chargerDemandes(); }
+        catch (err) { alert(err.message); }
+    }
+
+    async function decider(id, decision) {
+        let commentaire = null;
+        if (decision === 'APPROUVEE') {
+            if (!confirm('Approuver la demande n° ' + id + ' ?')) return;
+        } else {
+            commentaire = prompt('Motif (obligatoire) :');
+            if (commentaire === null) return;
+        }
+        try {
+            await api('/api/recrutement/demandes/' + id + '/decision', { method: 'POST', body: JSON.stringify({ decision, commentaire }) });
+            await chargerDemandes();
+        } catch (err) { alert(err.message); }
+    }
+
+    demarrer();
+</script>
+</body>
+</html>

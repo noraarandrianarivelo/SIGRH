@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${offre.titre + ' — Candidatures'}">Offre et candidatures — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <a class="back-link" th:href="@{/rh/offres}" href="#">← Retour aux offres</a>
+
+        <article class="panel">
+            <header class="title-row">
+                <div>
+                    <p class="eyebrow">Gestion de l'offre</p>
+                    <h1 th:text="${offre.titre}">Titre de l'offre</h1>
+                </div>
+                <span class="badge" th:text="${offre.statut}">OUVERTE</span>
+            </header>
+
+            <dl class="detail-grid">
+                <div>
+                    <dt>Référence</dt>
+                    <dd th:text="${offre.id}">1</dd>
+                </div>
+                <div>
+                    <dt>Publication</dt>
+                    <dd th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}">Non renseignée</dd>
+                </div>
+                <div>
+                    <dt>Date limite</dt>
+                    <dd th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</dd>
+                </div>
+            </dl>
+        </article>
+
+        <section class="panel" aria-labelledby="description-title">
+            <h2 id="description-title">Description</h2>
+            <p class="description" th:text="${offre.description != null ? offre.description : 'Aucune description renseignée.'}">
+                Description de l'offre d'emploi.
+            </p>
+        </section>
+
+        <section class="panel" aria-labelledby="candidatures-title">
+            <h2 id="candidatures-title">Candidatures</h2>
+
+            <div class="table-wrap" th:if="${!#lists.isEmpty(candidatures)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Référence</th>
+                            <th scope="col">Candidat</th>
+                            <th scope="col">E-mail</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Statut</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="candidature : ${candidatures}">
+                            <td th:text="${candidature.id}">1</td>
+                            <td>
+                                <span th:text="${candidature.candidat.prenom}">Prénom</span>
+                                <span th:text="${candidature.candidat.nom}">Nom</span>
+                            </td>
+                            <td th:text="${candidature.candidat.email}">candidat@example.com</td>
+                            <td th:text="${candidature.dateCandidature}">2026-10-21T10:00</td>
+                            <td><span class="badge" th:text="${candidature.statut}">RECUE</span></td>
+                            <td>
+                                <a class="action-link"
+                                   th:href="@{/rh/candidatures/{id}(id=${candidature.id})}"
+                                   href="#">Voir</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="empty-state" th:if="${#lists.isEmpty(candidatures)}">
+                Aucune candidature pour cette offre.
+            </p>
+        </section>
+    </main>
+</body>
+</html>
