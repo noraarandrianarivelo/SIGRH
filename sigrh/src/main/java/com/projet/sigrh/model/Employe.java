@@ -32,4 +32,8 @@ public class Employe {
 
     public Departement getDepartement() { return departement; }
     public void setDepartement(Departement departement) { this.departement = departement; }
+
+    public String getNomComplet() {
+        return prenom == null || prenom.isBlank() ? nom : prenom + " " + nom;
+    }
 }

@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface HistoriqueValidationRepository extends JpaRepository<HistoriqueValidation, Long> {
-    List<HistoriqueValidation> findByIdDemande(Long idDemande);
+
+    List<HistoriqueValidation> findByIdDemandeOrderByDateValidationAsc(Long idDemande);
 }

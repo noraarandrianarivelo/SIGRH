@@ -1,54 +1,42 @@
-package com.projet.sigrh.security;
+package com.projet.sigrh.config;
 
-import com.projet.sigrh.model.Utilisateur;
-import com.projet.sigrh.repository.UtilisateurRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.projet.sigrh.security.Roles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Collections;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private UtilisateurRepository utilisateurRepository;
-
+    // Les mots de passe en base sont des hachés BCrypt ($2a$10$...). Voir sql/donnees_test.sql.
     @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
-            @Override
-            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-                Utilisateur utilisateur = utilisateurRepository.findByUsername(username);
-                if (utilisateur == null) {
-                    throw new UsernameNotFoundException("Utilisateur non trouvé : " + username);
-                }
-
-                // Récupère le rôle depuis l'entité (ex: "ROLE_RH", "ROLE_MANAGER", etc.)
-                String role = utilisateur.getRole();
-                if (role == null || role.isEmpty()) {
-                    role = "ROLE_USER";
-                }
-
-                return new User(
-                    utilisateur.getUsername(),
-                    utilisateur.getPassword(), // Doit contenir {noop}password123 en base
-                    Collections.singletonList(new SimpleGrantedAuthority(role))
-                );
-            }
-        };
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        // Permet d'accepter les mots de passe préfixés par {noop} en clair
-        return NoOpPasswordEncoder.getInstance();
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            // Les appels fetch() de la page n'envoient pas de jeton CSRF : sans cette ligne,
+            // tous les POST/PUT sont refusés en 403.
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                // Données de référence : seule la RH (ou la Direction) peut en ajouter.
+                .requestMatchers(HttpMethod.POST, "/api/postes", "/api/departements", "/api/grilles-salaires")
+                    .hasAnyAuthority(Roles.RH, Roles.DIRECTION)
+                .requestMatchers("/api/recrutement/demandes/*/decision")
+                    .hasAnyAuthority(Roles.RH, Roles.FINANCE, Roles.DIRECTION)
+                .anyRequest().authenticated())
+            // Page de connexion fournie par Spring ; tous les rôles arrivent sur la même page,
+            // qui affiche ce que leur rôle permet.
+            .formLogin(form -> form.defaultSuccessUrl("/index.html", true))
+            .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
+        return http.build();
     }
 }

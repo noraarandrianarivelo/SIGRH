@@ -2,6 +2,8 @@ package com.projet.sigrh.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "besoin_poste")
 public class BesoinPoste {
@@ -14,20 +16,20 @@ public class BesoinPoste {
     @JoinColumn(name = "id_besoin", nullable = false)
     private Besoin besoin;
 
+    // Poste existant. Reste null tant que la RH n'a pas créé le poste proposé.
     @ManyToOne
     @JoinColumn(name = "id_poste")
     private Poste poste;
 
-    @Column(name = "libelle_poste_propose")
+    @Column(name = "libelle_poste_propose", length = 100)
     private String libellePostePropose;
 
     @Column(nullable = false)
-    private int effectif;
+    private Integer effectif;
 
-    @Column(name = "budget_mensuel_unitaire", nullable = false)
-    private double budgetMensuelUnitaire;
+    @Column(name = "budget_mensuel_unitaire", nullable = false, precision = 14, scale = 2)
+    private BigDecimal budgetMensuelUnitaire;
 
-    // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -40,9 +42,9 @@ public class BesoinPoste {
     public String getLibellePostePropose() { return libellePostePropose; }
     public void setLibellePostePropose(String libellePostePropose) { this.libellePostePropose = libellePostePropose; }
 
-    public int getEffectif() { return effectif; }
-    public void setEffectif(int effectif) { this.effectif = effectif; }
+    public Integer getEffectif() { return effectif; }
+    public void setEffectif(Integer effectif) { this.effectif = effectif; }
 
-    public double getBudgetMensuelUnitaire() { return budgetMensuelUnitaire; }
-    public void setBudgetMensuelUnitaire(double budgetMensuelUnitaire) { this.budgetMensuelUnitaire = budgetMensuelUnitaire; }
+    public BigDecimal getBudgetMensuelUnitaire() { return budgetMensuelUnitaire; }
+    public void setBudgetMensuelUnitaire(BigDecimal budgetMensuelUnitaire) { this.budgetMensuelUnitaire = budgetMensuelUnitaire; }
 }

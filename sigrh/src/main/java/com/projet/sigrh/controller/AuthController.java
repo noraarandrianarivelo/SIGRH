@@ -1,10 +1,9 @@
 package com.projet.sigrh.controller;
 
+import com.projet.sigrh.model.Employe;
 import com.projet.sigrh.model.Utilisateur;
-import com.projet.sigrh.repository.UtilisateurRepository;
+import com.projet.sigrh.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,24 +15,19 @@ import java.util.Map;
 public class AuthController {
 
     @Autowired
-    private UtilisateurRepository utilisateurRepository;
+    private UtilisateurService utilisateurService;
 
+    /** Qui est connecté ? Utilisé par la page pour afficher les bons blocs selon le rôle. */
     @GetMapping("/api/auth/current-user")
-    public ResponseEntity<?> getCurrentUser(Principal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Non connecté");
-        }
-        
-        Utilisateur utilisateur = utilisateurRepository.findByUsername(principal.getName());
-        if (utilisateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur introuvable");
-        }
-        
+    public Map<String, Object> currentUser(Principal principal) {
+        Utilisateur u = utilisateurService.getConnecte(principal);
+        Employe e = u.getEmploye();
+
         Map<String, Object> response = new HashMap<>();
-        response.put("username", utilisateur.getUsername());
-        response.put("role", utilisateur.getRole()); // Fait appel à la méthode getRole() de l'entité
-        response.put("nom", utilisateur.getEmploye() != null ? utilisateur.getEmploye().getNom() : utilisateur.getUsername());
-        
-        return ResponseEntity.ok(response);
+        response.put("username", u.getUsername());
+        response.put("role", u.getRole());
+        response.put("nom", e != null ? e.getNomComplet() : u.getUsername());
+        response.put("departementId", e != null && e.getDepartement() != null ? e.getDepartement().getId() : null);
+        return response;
     }
 }
