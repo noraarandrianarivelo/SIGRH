@@ -8,4 +8,6 @@ import com.projet.sigrh.model.Candidature;
 
 public interface CandidatureRepository extends JpaRepository<Candidature, Integer> {
     List<Candidature> findByOffreId(Integer offreId);
+
+    boolean existsByCandidatIdAndOffreId(Integer candidatId, Integer offreId);
 }

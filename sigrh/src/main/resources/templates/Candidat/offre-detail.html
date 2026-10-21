@@ -17,6 +17,10 @@
     <main class="container">
         <a class="back-link" th:href="@{/candidat/offre-emploi}" href="#">← Retour aux offres</a>
 
+        <p class="success-message" th:if="${param.candidature}">
+            Votre candidature a bien été envoyée.
+        </p>
+
         <article class="panel">
             <header class="title-row">
                 <div>
@@ -48,6 +52,11 @@
                 Description de l'offre d'emploi.
             </p>
         </section>
+
+        <a class="button"
+           th:if="${offre.statut == 'OUVERT'}"
+           th:href="@{/candidat/offre-emploi/{id}/candidature(id=${offre.id})}"
+           href="#">Envoyer une candidature</a>
     </main>
 </body>
 </html>

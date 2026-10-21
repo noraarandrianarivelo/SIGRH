@@ -28,7 +28,7 @@ public class Candidature {
     @JoinColumn(name = "id_offre", nullable = false)
     public OffreEmploi offre;
 
-    @Column(name = "cv")
+    @Column(name = "cv", nullable = false)
     public String cv;
     @Column(name = "lettre_motivation")
     public String lettreMotivation;

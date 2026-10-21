@@ -104,7 +104,7 @@ CREATE TABLE candidat (
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100),
     date_naissance DATE,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     telephone VARCHAR(30),
     qualifications TEXT
 );
