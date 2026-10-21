@@ -21,6 +21,9 @@
                     <p class="eyebrow">Recrutement</p>
                     <h1 id="offres-title">Gestion des offres</h1>
                 </div>
+                <a class="button" th:href="@{/rh/evaluations}" href="#">
+                    Voir les séances d'évaluation
+                </a>
             </header>
 
             <div class="table-wrap" th:if="${!#lists.isEmpty(offres)}">

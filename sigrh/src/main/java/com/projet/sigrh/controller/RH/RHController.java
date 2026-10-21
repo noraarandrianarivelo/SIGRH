@@ -3,6 +3,7 @@ package com.projet.sigrh.controller.RH;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -15,20 +16,27 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.service.CandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
+import com.projet.sigrh.service.SeanceEvaluationService;
 
 @Controller
 public class RHController {
     private final OffreEmploiService offreEmploiService;
     private final CandidatureService candidatureService;
+    private final SeanceEvaluationService seanceEvaluationService;
 
-    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService) {
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService) {
         this.offreEmploiService = offreEmploiService;
         this.candidatureService = candidatureService;
+        this.seanceEvaluationService = seanceEvaluationService;
     }
 
     @GetMapping("/rh/offres")
@@ -43,6 +51,20 @@ public class RHController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre d'emploi introuvable")));
         model.addAttribute("candidatures", candidatureService.findByOffreId(id));
         return "RH/offre-detail";
+    }
+
+    @GetMapping("/rh/evaluations")
+    public String afficherEvaluations(Model model) {
+        model.addAttribute("seances", seanceEvaluationService.findAll());
+        return "RH/seance-evaluation-list";
+    }
+
+    @GetMapping("/rh/evaluations/{id}")
+    public String afficherEvaluation(@PathVariable Integer id, Model model) {
+        model.addAttribute("seance", seanceEvaluationService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Séance d'évaluation introuvable")));
+        return "RH/seance-evaluation-detail";
     }
 
     @GetMapping("/rh/candidatures/{id}")
@@ -64,6 +86,30 @@ public class RHController {
     public ResponseEntity<Resource> afficherLettreMotivation(@PathVariable Integer id) throws IOException {
         Candidature candidature = trouverCandidature(id);
         return servirFichier(candidature.lettreMotivation);
+    }
+
+    @GetMapping("/rh/candidatures/{id}/evaluation")
+    public String afficherFormulaireEvaluation(@PathVariable Integer id, Model model) {
+        model.addAttribute("candidature", trouverCandidature(id));
+        model.addAttribute("evaluateurs", seanceEvaluationService.listerEvaluateurs());
+        model.addAttribute("tests", seanceEvaluationService.listerTests());
+        return "RH/seance-evaluation-form";
+    }
+
+    @PostMapping("/rh/candidatures/{id}/evaluation")
+    public String arrangerEvaluation(@PathVariable Integer id,
+            @RequestParam String evaluateurId,
+            @RequestParam(required = false) Integer testId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    LocalDateTime dateEntretien,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    LocalDateTime dateTest,
+            @RequestParam(required = false) String lieuEntretien,
+            @RequestParam(required = false) String lieuTest,
+            @RequestParam String statut) {
+        seanceEvaluationService.creer(trouverCandidature(id), evaluateurId, testId,
+                dateEntretien, dateTest, lieuEntretien, lieuTest, statut);
+        return "redirect:/rh/candidatures/" + id + "?evaluation=planifiee";
     }
 
     private Candidature trouverCandidature(Integer id) {

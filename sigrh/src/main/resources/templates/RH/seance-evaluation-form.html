@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arranger une évaluation — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+
+    <main class="container form-container">
+        <a class="back-link"
+           th:href="@{/rh/candidatures/{id}(id=${candidature.id})}"
+           href="#">← Retour à la candidature</a>
+
+        <section class="panel" aria-labelledby="evaluation-title">
+            <p class="eyebrow">Évaluation</p>
+            <h1 id="evaluation-title">
+                <span th:text="${candidature.candidat.prenom}">Prénom</span>
+                <span th:text="${candidature.candidat.nom}">Nom</span>
+            </h1>
+
+            <form class="upload-form"
+                  th:action="@{/rh/candidatures/{id}/evaluation(id=${candidature.id})}"
+                  method="post">
+                <div class="form-field">
+                    <label for="evaluateurId">Évaluateur *</label>
+                    <select id="evaluateurId" name="evaluateurId" required>
+                        <option value="">Sélectionner un employé</option>
+                        <option th:each="employe : ${evaluateurs}"
+                                th:value="${employe.id}"
+                                th:text="${employe.nomComplet}">Nom de l'employé</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="dateEntretien">Date et heure de l'entretien</label>
+                    <input id="dateEntretien" name="dateEntretien" type="datetime-local">
+                </div>
+
+                <div class="form-field">
+                    <label for="lieuEntretien">Lieu de l'entretien</label>
+                    <input id="lieuEntretien" name="lieuEntretien" type="text">
+                </div>
+
+                <div class="form-field">
+                    <label for="testId">Test de recrutement</label>
+                    <select id="testId" name="testId">
+                        <option value="">Aucun test</option>
+                        <option th:each="test : ${tests}"
+                                th:value="${test.id}"
+                                th:text="${test.description + ' — niveau ' + test.niveau}">Description du test</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="dateTest">Date et heure du test</label>
+                    <input id="dateTest" name="dateTest" type="datetime-local">
+                    <small>Obligatoire lorsqu'un test est sélectionné.</small>
+                </div>
+
+                <div class="form-field">
+                    <label for="lieuTest">Lieu du test</label>
+                    <input id="lieuTest" name="lieuTest" type="text">
+                </div>
+
+                <div class="form-field">
+                    <label for="statut">Statut *</label>
+                    <select id="statut" name="statut" required>
+                        <option value="PLANIFIEE" selected>Planifiée</option>
+                        <option value="TERMINEE">Terminée</option>
+                        <option value="ANNULEE">Annulée</option>
+                        <option value="ABSENT">Absent</option>
+                    </select>
+                </div>
+
+                <button class="button" type="submit">Enregistrer la séance</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

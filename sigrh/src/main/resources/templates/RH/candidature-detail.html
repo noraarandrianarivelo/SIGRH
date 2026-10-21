@@ -19,6 +19,10 @@
            th:href="@{/rh/offres/{id}(id=${candidature.offre.id})}"
            href="#">← Retour à l'offre</a>
 
+        <p class="success-message" th:if="${param.evaluation}">
+            La séance d'évaluation a bien été enregistrée.
+        </p>
+
         <article class="panel">
             <header class="title-row">
                 <div>
@@ -46,6 +50,10 @@
                 </div>
             </dl>
         </article>
+
+        <a class="button"
+           th:href="@{/rh/candidatures/{id}/evaluation(id=${candidature.id})}"
+           href="#">Arranger une évaluation</a>
 
         <section class="panel" aria-labelledby="candidate-title">
             <h2 id="candidate-title">Informations du candidat</h2>
