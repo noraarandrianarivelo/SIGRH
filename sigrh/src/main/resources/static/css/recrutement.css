@@ -150,6 +150,10 @@ h2 {
     font-weight: 600;
 }
 
+.detail-grid + .button {
+    margin-top: 1.5rem;
+}
+
 .description {
     margin: 0;
     white-space: pre-wrap;
@@ -242,6 +246,7 @@ tbody tr:last-child td {
 
 .form-field input[type="file"],
 .form-field input[type="text"],
+.form-field input[type="number"],
 .form-field input[type="datetime-local"],
 .form-field textarea,
 .form-field select {
