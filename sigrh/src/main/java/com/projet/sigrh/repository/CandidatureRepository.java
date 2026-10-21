@@ -10,4 +10,8 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Intege
     List<Candidature> findByOffreId(Integer offreId);
 
     boolean existsByCandidatIdAndOffreId(Integer candidatId, Integer offreId);
+
+    boolean existsByOffreIdAndStatut(Integer offreId, String statut);
+
+    long countByOffreIdAndStatut(Integer offreId, String statut);
 }

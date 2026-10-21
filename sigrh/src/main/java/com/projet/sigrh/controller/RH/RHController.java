@@ -5,8 +5,10 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.security.Principal;
 
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -25,20 +27,34 @@ import org.springframework.web.server.ResponseStatusException;
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.SeanceEvaluation;
 import com.projet.sigrh.service.CandidatureService;
+import com.projet.sigrh.service.DecisionCandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
 import com.projet.sigrh.service.SeanceEvaluationService;
+import com.projet.sigrh.service.UtilisateurService;
+import com.projet.sigrh.dto.DecisionCandidatureRequest;
 
 @Controller
 public class RHController {
     private final OffreEmploiService offreEmploiService;
     private final CandidatureService candidatureService;
     private final SeanceEvaluationService seanceEvaluationService;
+    private final DecisionCandidatureService decisionCandidatureService;
+    private final UtilisateurService utilisateurService;
 
     public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
             SeanceEvaluationService seanceEvaluationService) {
+        this(offreEmploiService, candidatureService, seanceEvaluationService, null, null);
+    }
+
+    @Autowired
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
+            UtilisateurService utilisateurService) {
         this.offreEmploiService = offreEmploiService;
         this.candidatureService = candidatureService;
         this.seanceEvaluationService = seanceEvaluationService;
+        this.decisionCandidatureService = decisionCandidatureService;
+        this.utilisateurService = utilisateurService;
     }
 
     @GetMapping("/rh/offres")
@@ -52,7 +68,22 @@ public class RHController {
         model.addAttribute("offre", offreEmploiService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre d'emploi introuvable")));
         model.addAttribute("candidatures", candidatureService.findByOffreId(id));
+        if (decisionCandidatureService != null) {
+            model.addAttribute("comparaison", decisionCandidatureService.comparer(id));
+        }
         return "RH/offre-detail";
+    }
+
+    @PostMapping("/rh/candidatures/{id}/decision")
+    public String deciderCandidature(@PathVariable Integer id, @RequestParam String decision,
+            @RequestParam String motif, Principal principal) {
+        if (decisionCandidatureService == null || utilisateurService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de décision des candidatures n'est pas configuré");
+        }
+        decisionCandidatureService.decider(id, new DecisionCandidatureRequest(decision, motif),
+                utilisateurService.getConnecte(principal));
+        return "redirect:/rh/offres/" + trouverCandidature(id).offre.id + "?decision=enregistree";
     }
 
     @GetMapping("/rh/evaluations")
