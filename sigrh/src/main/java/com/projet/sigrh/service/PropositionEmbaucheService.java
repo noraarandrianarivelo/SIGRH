@@ -14,12 +14,17 @@ import com.projet.sigrh.dto.PropositionEmbaucheRequest;
 import com.projet.sigrh.exception.BusinessException;
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.Candidat;
+import com.projet.sigrh.model.Contrat;
 import com.projet.sigrh.model.Employe;
 import com.projet.sigrh.model.OffreEmploi;
+import com.projet.sigrh.model.Poste;
 import com.projet.sigrh.model.PropositionEmbauche;
 import com.projet.sigrh.model.Utilisateur;
 import com.projet.sigrh.repository.CandidatureRepository;
+import com.projet.sigrh.repository.ContratRepository;
+import com.projet.sigrh.repository.BesoinPosteRepository;
 import com.projet.sigrh.repository.OffreEmploiRepository;
+import com.projet.sigrh.repository.PosteRepository;
 import com.projet.sigrh.repository.PropositionEmbaucheRepository;
 import com.projet.sigrh.repository.DemandeRecrutementRepository;
 import com.projet.sigrh.repository.EmployeRepository;
@@ -34,15 +39,23 @@ public class PropositionEmbaucheService {
     private final EmployeRepository employeRepository;
     private final CandidatureRepository candidatureRepository;
     private final OffreEmploiRepository offreRepository;
+    private final ContratRepository contratRepository;
+    private final PosteRepository posteRepository;
+    private final BesoinPosteRepository besoinPosteRepository;
 
     public PropositionEmbaucheService(PropositionEmbaucheRepository repository,
             DemandeRecrutementRepository demandeRepository, EmployeRepository employeRepository,
-            CandidatureRepository candidatureRepository, OffreEmploiRepository offreRepository) {
+            CandidatureRepository candidatureRepository, OffreEmploiRepository offreRepository,
+            ContratRepository contratRepository, PosteRepository posteRepository,
+            BesoinPosteRepository besoinPosteRepository) {
         this.repository = repository;
         this.demandeRepository = demandeRepository;
         this.employeRepository = employeRepository;
         this.candidatureRepository = candidatureRepository;
         this.offreRepository = offreRepository;
+        this.contratRepository = contratRepository;
+        this.posteRepository = posteRepository;
+        this.besoinPosteRepository = besoinPosteRepository;
     }
 
     public BigDecimal salaireInitial(Candidature candidature) {
@@ -89,7 +102,9 @@ public class PropositionEmbaucheService {
         proposition.dateReponse = java.time.LocalDateTime.now();
         proposition.messageReponse = message == null || message.isBlank() ? null : message.trim();
         if ("ACCEPTEE".equals(statut)) {
-            creerEmploye(proposition.candidature);
+            obtenirPoste(proposition.candidature);
+            Employe employe = creerEmploye(proposition.candidature);
+            creerContrat(proposition, employe);
         } else {
             traiterRefus(proposition);
         }
@@ -141,6 +156,50 @@ public class PropositionEmbaucheService {
             employe.setDepartement(candidature.offre.besoinPoste.getPoste().getDepartement());
         }
         return employeRepository.save(employe);
+    }
+
+    private Contrat creerContrat(PropositionEmbauche proposition, Employe employe) {
+        if (contratRepository.findByPropositionId(proposition.id).isPresent()) {
+            throw new BusinessException("Un contrat existe déjà pour cette proposition.", HttpStatus.CONFLICT);
+        }
+        Poste poste = obtenirPoste(proposition.candidature);
+
+        Contrat contrat = new Contrat();
+        contrat.proposition = proposition;
+        contrat.employe = employe;
+        contrat.poste = poste;
+        contrat.typeContrat = proposition.typeContrat;
+        contrat.dateDebut = proposition.dateDebutPrevue;
+        contrat.salaireMensuel = proposition.salaireMensuel;
+        contrat.horaires = proposition.horaires;
+        contrat.lieuTravail = proposition.lieuTravail;
+        contrat.conditions = proposition.autresConditions;
+        return contratRepository.save(contrat);
+    }
+
+    private Poste obtenirPoste(Candidature candidature) {
+        if (candidature.offre == null || candidature.offre.besoinPoste == null) {
+            throw new BusinessException("L'offre ou la ligne de besoin du contrat est introuvable.");
+        }
+        var besoinPoste = candidature.offre.besoinPoste;
+        if (besoinPoste.getPoste() != null) {
+            return besoinPoste.getPoste();
+        }
+        if (besoinPoste.getLibellePostePropose() == null
+                || besoinPoste.getLibellePostePropose().isBlank()
+                || besoinPoste.getBesoin() == null
+                || besoinPoste.getBesoin().getDepartement() == null) {
+            throw new BusinessException("Le poste du contrat est introuvable.");
+        }
+        Poste poste = posteRepository
+                .findFirstByDepartementIdAndLibelleIgnoreCase(
+                        besoinPoste.getBesoin().getDepartement().getId(),
+                        besoinPoste.getLibellePostePropose().trim())
+                .orElseThrow(() -> new BusinessException(
+                        "Le poste « " + besoinPoste.getLibellePostePropose() + " » n'existe pas dans ce département."));
+        besoinPoste.setPoste(poste);
+        besoinPosteRepository.save(besoinPoste);
+        return poste;
     }
 
     private String genererMatricule() {

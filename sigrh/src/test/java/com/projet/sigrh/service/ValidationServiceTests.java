@@ -20,6 +20,7 @@ import com.projet.sigrh.dto.DecisionRequest;
 import com.projet.sigrh.model.Besoin;
 import com.projet.sigrh.model.BesoinPoste;
 import com.projet.sigrh.model.DemandeRecrutement;
+import com.projet.sigrh.model.Departement;
 import com.projet.sigrh.model.Employe;
 import com.projet.sigrh.model.OffreEmploi;
 import com.projet.sigrh.model.Poste;
@@ -30,6 +31,7 @@ import com.projet.sigrh.model.enums.StatutDemande;
 import com.projet.sigrh.repository.DemandeRecrutementRepository;
 import com.projet.sigrh.repository.HistoriqueValidationRepository;
 import com.projet.sigrh.repository.OffreEmploiRepository;
+import com.projet.sigrh.repository.PosteRepository;
 import com.projet.sigrh.security.Roles;
 
 class ValidationServiceTests {
@@ -90,6 +92,14 @@ class ValidationServiceTests {
         ReflectionTestUtils.setField(service, "demandeRepository", demandeRepository);
         ReflectionTestUtils.setField(service, "historiqueRepository", mock(HistoriqueValidationRepository.class));
         ReflectionTestUtils.setField(service, "offreEmploiRepository", offreRepository);
+        PosteRepository posteRepository = mock(PosteRepository.class);
+        long[] nextPosteId = {100L};
+        when(posteRepository.save(any(Poste.class))).thenAnswer(invocation -> {
+            Poste poste = invocation.getArgument(0);
+            poste.setId(nextPosteId[0]++);
+            return poste;
+        });
+        ReflectionTestUtils.setField(service, "posteRepository", posteRepository);
         return service;
     }
 
@@ -98,6 +108,9 @@ class ValidationServiceTests {
         demandeur.setId("EMP001");
         Besoin besoin = new Besoin();
         besoin.setMotif("Besoin de renfort");
+        Departement departement = new Departement();
+        departement.setId(1L);
+        besoin.setDepartement(departement);
 
         DemandeRecrutement demande = new DemandeRecrutement();
         demande.setId(3L);

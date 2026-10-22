@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.SeanceEvaluation;
+import com.projet.sigrh.service.ContratService;
 import com.projet.sigrh.service.CandidatureService;
 import com.projet.sigrh.service.DecisionCandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
@@ -43,35 +44,57 @@ public class RHController {
     private final DecisionCandidatureService decisionCandidatureService;
     private final UtilisateurService utilisateurService;
     private final PropositionEmbaucheService propositionService;
+    private final ContratService contratService;
 
     public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
             SeanceEvaluationService seanceEvaluationService) {
-        this(offreEmploiService, candidatureService, seanceEvaluationService, null, null);
+        this(offreEmploiService, candidatureService, seanceEvaluationService, null, null, null, null);
     }
 
     public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
             SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
             UtilisateurService utilisateurService) {
         this(offreEmploiService, candidatureService, seanceEvaluationService,
-                decisionCandidatureService, utilisateurService, null);
+                decisionCandidatureService, utilisateurService, null, null);
+    }
+
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
+            UtilisateurService utilisateurService, PropositionEmbaucheService propositionService) {
+        this(offreEmploiService, candidatureService, seanceEvaluationService, decisionCandidatureService,
+                utilisateurService, propositionService, null);
     }
 
     @Autowired
     public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
             SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
-            UtilisateurService utilisateurService, PropositionEmbaucheService propositionService) {
+            UtilisateurService utilisateurService, PropositionEmbaucheService propositionService,
+            ContratService contratService) {
         this.offreEmploiService = offreEmploiService;
         this.candidatureService = candidatureService;
         this.seanceEvaluationService = seanceEvaluationService;
         this.decisionCandidatureService = decisionCandidatureService;
         this.utilisateurService = utilisateurService;
         this.propositionService = propositionService;
+        this.contratService = contratService;
     }
 
     @GetMapping("/rh/offres")
     public String afficherOffres(Model model) {
         model.addAttribute("offres", offreEmploiService.findByStatut("OUVERT"));
         return "RH/offre-list";
+    }
+
+    @GetMapping("/rh/contrats")
+    public String afficherContrats(Model model) {
+        model.addAttribute("contrats", contratService.lister());
+        return "RH/contrat-list";
+    }
+
+    @PostMapping("/rh/contrats/{id}/signer")
+    public String signerContrat(@PathVariable Integer id, Principal principal) {
+        contratService.signer(id, utilisateurService.getConnecte(principal));
+        return "redirect:/rh/contrats?contrat=signe";
     }
 
     @GetMapping("/rh/offres/{id}")
