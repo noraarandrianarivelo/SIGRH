@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,6 +17,9 @@
 
     <main class="container">
         <a class="back-link" th:href="@{/rh/offres}" href="#">← Retour aux offres</a>
+        <p class="success-message" th:if="${param.decision}">
+            La décision de la Direction a bien été enregistrée.
+        </p>
 
         <article class="panel">
             <header class="title-row">
@@ -38,6 +42,10 @@
                 <div>
                     <dt>Date limite</dt>
                     <dd th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</dd>
+                </div>
+                <div>
+                    <dt>Postes à pourvoir</dt>
+                    <dd th:text="${offre.besoinPoste.effectif}">1</dd>
                 </div>
             </dl>
         </article>
@@ -87,6 +95,73 @@
             <p class="empty-state" th:if="${#lists.isEmpty(candidatures)}">
                 Aucune candidature pour cette offre.
             </p>
+        </section>
+
+        <section class="panel" aria-labelledby="decision-title" th:if="${comparaison != null}">
+            <h2 id="decision-title">Comparaison et décision de la Direction</h2>
+            <p class="muted">Toutes les notes disponibles sont présentées avant la décision. Le nombre de candidats retenus est limité au nombre de postes à pourvoir.</p>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(comparaison)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Statut</th>
+                            <th>Notes et avis</th>
+                            <th>Décision</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ligne : ${comparaison}">
+                            <td>
+                                <span th:text="${ligne.candidature.candidat.prenom}">Prénom</span>
+                                <span th:text="${ligne.candidature.candidat.nom}">Nom</span>
+                            </td>
+                            <td><span class="badge" th:text="${ligne.candidature.statut}">RECUE</span></td>
+                            <td>
+                                <p th:if="${#lists.isEmpty(ligne.notes)}" class="muted">Aucune évaluation enregistrée.</p>
+                                <ul th:unless="${#lists.isEmpty(ligne.notes)}">
+                                    <li th:each="note : ${ligne.notes}">
+                                        Entretien :
+                                        <strong th:text="${note.noteEntretien != null ? note.noteEntretien + '/20' : '—'}">—</strong>,
+                                        test :
+                                        <strong th:text="${note.noteTest != null ? note.noteTest + '/20' : '—'}">—</strong>,
+                                        avis :
+                                        <strong th:text="${note.avis != null ? note.avis : '—'}">—</strong>
+                                        <span th:if="${note.commentaire != null}"
+                                              th:text="${' — ' + note.commentaire}"> — commentaire</span>
+                                    </li>
+                                </ul>
+                            </td>
+                            <td sec:authorize="hasAuthority('ROLE_DIRECTION')">
+                                <form th:action="@{/rh/candidatures/{id}/decision(id=${ligne.candidature.id})}"
+                                      method="post">
+                                    <label>
+                                        Motif
+                                        <input type="text" name="motif" required
+                                               placeholder="Justification de la décision">
+                                    </label>
+                                    <button class="button" type="submit" name="decision" value="RETENUE"
+                                            th:disabled="${ligne.candidature.statut == 'RETENUE'}">Retenir</button>
+                                    <button class="button button--secondary" type="submit" name="decision" value="REJETEE"
+                                            th:disabled="${ligne.candidature.statut == 'REJETEE'}">Rejeter</button>
+                                    <button class="button button--secondary" type="submit" name="decision" value="RESERVE"
+                                            th:disabled="${ligne.candidature.statut == 'RESERVE'}">Mettre en réserve</button>
+                                </form>
+                            </td>
+                            <td sec:authorize="!hasAuthority('ROLE_DIRECTION')" class="muted">
+                                Décision réservée à la Direction
+                            </td>
+                            <td sec:authorize="hasAnyAuthority('ROLE_RH', 'ROLE_DIRECTION')">
+                                <a class="button"
+                                   th:if="${ligne.candidature.statut == 'RESERVE'}"
+                                   th:href="@{/rh/candidatures/{id}/proposition(id=${ligne.candidature.id})}">
+                                    Choisir ce candidat
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
 </body>

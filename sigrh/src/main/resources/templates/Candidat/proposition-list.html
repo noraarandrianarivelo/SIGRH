@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mes propositions d'embauche — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/candidat/offre-emploi}" href="#">SIGRH</a>
+            <span class="area-name">Espace candidat</span>
+        </div>
+    </header>
+    <main class="container">
+        <a class="back-link" th:href="@{/candidat/offre-emploi}" href="#">← Retour aux offres</a>
+        <p class="success-message" th:if="${param.reponse}">
+            Votre réponse a été enregistrée.
+        </p>
+        <section class="panel">
+            <header class="title-row">
+                <div>
+                    <p class="eyebrow">Embauche</p>
+                    <h1>Mes propositions d'embauche</h1>
+                </div>
+            </header>
+            <div th:if="${#lists.isEmpty(propositions)}" class="empty-state">
+                Aucune proposition d'embauche reçue.
+            </div>
+            <div th:each="proposition : ${propositions}" class="panel">
+                <header class="title-row">
+                    <div>
+                        <h2 th:text="${proposition.candidature.offre.titre}">Poste proposé</h2>
+                        <p class="muted" th:text="${'Envoyée le ' + proposition.dateEnvoi}">Envoyée le</p>
+                    </div>
+                    <span class="badge" th:text="${proposition.statut}">EN_ATTENTE</span>
+                </header>
+                <dl class="detail-grid">
+                    <div><dt>Salaire mensuel</dt><dd th:text="${proposition.salaireMensuel + ' Ar'}">0 Ar</dd></div>
+                    <div><dt>Date de début prévue</dt><dd th:text="${proposition.dateDebutPrevue}">2026-12-01</dd></div>
+                    <div><dt>Type de contrat</dt><dd th:text="${proposition.typeContrat}">CE</dd></div>
+                    <div><dt>Horaires</dt><dd th:text="${proposition.horaires ?: 'Non renseignés'}">Non renseignés</dd></div>
+                    <div><dt>Lieu de travail</dt><dd th:text="${proposition.lieuTravail ?: 'Non renseigné'}">Non renseigné</dd></div>
+                </dl>
+                <p class="description" th:if="${proposition.autresConditions != null}"
+                   th:text="${proposition.autresConditions}">Conditions</p>
+                <form th:if="${proposition.statut == 'EN_ATTENTE'}"
+                      th:action="@{/candidat/propositions/{id}/reponse(id=${proposition.id})}" method="post">
+                    <div class="form-field">
+                        <label th:for="${'message-' + proposition.id}">Message (facultatif)</label>
+                        <textarea th:id="${'message-' + proposition.id}" name="message" rows="3"
+                                  placeholder="Votre réponse ou remarque"></textarea>
+                    </div>
+                    <button class="button" type="submit" name="statut" value="ACCEPTEE">Accepter</button>
+                    <button class="button button--secondary" type="submit" name="statut" value="REFUSEE">Refuser</button>
+                </form>
+                <p class="muted" th:if="${proposition.statut != 'EN_ATTENTE'}"
+                   th:text="${'Réponse envoyée le ' + proposition.dateReponse}">Réponse envoyée</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

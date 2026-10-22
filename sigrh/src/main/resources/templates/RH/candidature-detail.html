@@ -22,6 +22,9 @@
         <p class="success-message" th:if="${param.evaluation}">
             La séance d'évaluation a bien été enregistrée.
         </p>
+        <p class="success-message" th:if="${param.proposition}">
+            La proposition d'embauche a été envoyée.
+        </p>
 
         <article class="panel">
             <header class="title-row">
@@ -54,6 +57,13 @@
         <a class="button"
            th:href="@{/rh/candidatures/{id}/evaluation(id=${candidature.id})}"
            href="#">Arranger une évaluation</a>
+
+        <a class="button" th:if="${candidature.statut == 'RETENUE' && propositionActive == null}"
+           th:href="@{/rh/candidatures/{id}/proposition(id=${candidature.id})}"
+           href="#">Préparer une proposition d'embauche</a>
+        <p class="muted" th:if="${propositionActive != null}">
+            Une proposition est déjà <span th:text="${propositionActive.statut}">EN_ATTENTE</span>.
+        </p>
 
         <section class="panel" aria-labelledby="candidate-title">
             <h2 id="candidate-title">Informations du candidat</h2>

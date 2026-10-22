@@ -88,6 +88,9 @@ public class ValidationService {
         d.setStatut(WorkflowDemande.statutApresDecision(d, etape, decision));
         DemandeRecrutement demandeEnregistree = demandeRepository.save(d);
         if (d.getStatut() == StatutDemande.VALIDEE) {
+            // Le circuit DIRECTION_DIRECTE saute l'étape RH : les postes proposés
+            // doivent donc être créés ici avant de générer les offres.
+            creerPostesProposes(d);
             creerOffres(d);
         }
         return demandeService.toResponse(demandeEnregistree, u);
@@ -129,6 +132,9 @@ public class ValidationService {
     /** Les lignes « poste à créer » deviennent de vrais postes du département du besoin. */
     private void creerPostesProposes(DemandeRecrutement d) {
         Besoin besoin = d.getBesoin();
+        if (besoin.getDepartement() == null) {
+            throw new BusinessException("Le département du besoin est obligatoire pour créer les postes proposés.");
+        }
         Set<Long> dejaUtilises = new HashSet<>();
         for (BesoinPoste l : besoin.getLignes()) {
             if (l.getPoste() != null) {

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contrats — SIGRH</title>
+    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar__content">
+            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
+            <span class="area-name">Espace RH</span>
+        </div>
+    </header>
+    <main class="container">
+        <section class="panel">
+            <p class="eyebrow">Administration du personnel</p>
+            <h1>Contrats</h1>
+            <p><a class="back-link" th:href="@{/rh/offres}" href="#">← Retour aux offres</a></p>
+            <p class="muted">Les contrats acceptés sont créés en brouillon avant leur signature.</p>
+            <div class="table-wrap" th:if="${!#lists.isEmpty(contrats)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employé</th>
+                            <th>Poste</th>
+                            <th>Type</th>
+                            <th>Début</th>
+                            <th>Salaire</th>
+                            <th>Statut</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="contrat : ${contrats}">
+                            <td th:text="${contrat.employe.nomComplet}">Employé</td>
+                            <td th:text="${contrat.poste.libelle}">Poste</td>
+                            <td th:text="${contrat.typeContrat}">CE</td>
+                            <td th:text="${contrat.dateDebut}">2026-11-26</td>
+                            <td th:text="${contrat.salaireMensuel}">0</td>
+                            <td><span class="badge" th:text="${contrat.statut}">BROUILLON</span></td>
+                            <td>
+                                <form th:if="${contrat.statut == 'BROUILLON'}"
+                                      th:action="@{/rh/contrats/{id}/signer(id=${contrat.id})}" method="post">
+                                    <button class="button" type="submit">Signer</button>
+                                </form>
+                                <span class="muted" th:if="${contrat.statut != 'BROUILLON'}"
+                                      th:text="${contrat.dateSignature}">2026-11-26</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="empty-state" th:if="${#lists.isEmpty(contrats)}">Aucun contrat créé.</p>
+        </section>
+    </main>
+</body>
+</html>

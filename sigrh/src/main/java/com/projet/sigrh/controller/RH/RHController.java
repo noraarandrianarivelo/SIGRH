@@ -5,8 +5,10 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.security.Principal;
 
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -24,21 +26,57 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.SeanceEvaluation;
+import com.projet.sigrh.service.ContratService;
 import com.projet.sigrh.service.CandidatureService;
+import com.projet.sigrh.service.DecisionCandidatureService;
 import com.projet.sigrh.service.OffreEmploiService;
 import com.projet.sigrh.service.SeanceEvaluationService;
+import com.projet.sigrh.service.UtilisateurService;
+import com.projet.sigrh.dto.DecisionCandidatureRequest;
+import com.projet.sigrh.dto.PropositionEmbaucheRequest;
+import com.projet.sigrh.service.PropositionEmbaucheService;
 
 @Controller
 public class RHController {
     private final OffreEmploiService offreEmploiService;
     private final CandidatureService candidatureService;
     private final SeanceEvaluationService seanceEvaluationService;
+    private final DecisionCandidatureService decisionCandidatureService;
+    private final UtilisateurService utilisateurService;
+    private final PropositionEmbaucheService propositionService;
+    private final ContratService contratService;
 
     public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
             SeanceEvaluationService seanceEvaluationService) {
+        this(offreEmploiService, candidatureService, seanceEvaluationService, null, null, null, null);
+    }
+
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
+            UtilisateurService utilisateurService) {
+        this(offreEmploiService, candidatureService, seanceEvaluationService,
+                decisionCandidatureService, utilisateurService, null, null);
+    }
+
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
+            UtilisateurService utilisateurService, PropositionEmbaucheService propositionService) {
+        this(offreEmploiService, candidatureService, seanceEvaluationService, decisionCandidatureService,
+                utilisateurService, propositionService, null);
+    }
+
+    @Autowired
+    public RHController(OffreEmploiService offreEmploiService, CandidatureService candidatureService,
+            SeanceEvaluationService seanceEvaluationService, DecisionCandidatureService decisionCandidatureService,
+            UtilisateurService utilisateurService, PropositionEmbaucheService propositionService,
+            ContratService contratService) {
         this.offreEmploiService = offreEmploiService;
         this.candidatureService = candidatureService;
         this.seanceEvaluationService = seanceEvaluationService;
+        this.decisionCandidatureService = decisionCandidatureService;
+        this.utilisateurService = utilisateurService;
+        this.propositionService = propositionService;
+        this.contratService = contratService;
     }
 
     @GetMapping("/rh/offres")
@@ -47,12 +85,39 @@ public class RHController {
         return "RH/offre-list";
     }
 
+    @GetMapping("/rh/contrats")
+    public String afficherContrats(Model model) {
+        model.addAttribute("contrats", contratService.lister());
+        return "RH/contrat-list";
+    }
+
+    @PostMapping("/rh/contrats/{id}/signer")
+    public String signerContrat(@PathVariable Integer id, Principal principal) {
+        contratService.signer(id, utilisateurService.getConnecte(principal));
+        return "redirect:/rh/contrats?contrat=signe";
+    }
+
     @GetMapping("/rh/offres/{id}")
     public String afficherOffre(@PathVariable Integer id, Model model) {
         model.addAttribute("offre", offreEmploiService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre d'emploi introuvable")));
         model.addAttribute("candidatures", candidatureService.findByOffreId(id));
+        if (decisionCandidatureService != null) {
+            model.addAttribute("comparaison", decisionCandidatureService.comparer(id));
+        }
         return "RH/offre-detail";
+    }
+
+    @PostMapping("/rh/candidatures/{id}/decision")
+    public String deciderCandidature(@PathVariable Integer id, @RequestParam String decision,
+            @RequestParam String motif, Principal principal) {
+        if (decisionCandidatureService == null || utilisateurService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de décision des candidatures n'est pas configuré");
+        }
+        decisionCandidatureService.decider(id, new DecisionCandidatureRequest(decision, motif),
+                utilisateurService.getConnecte(principal));
+        return "redirect:/rh/offres/" + trouverCandidature(id).offre.id + "?decision=enregistree";
     }
 
     @GetMapping("/rh/evaluations")
@@ -93,7 +158,53 @@ public class RHController {
         model.addAttribute("candidature", candidature);
         model.addAttribute("cvAffichable", candidatureService.estAffichable(candidature.cv));
         model.addAttribute("lettreAffichable", candidatureService.estAffichable(candidature.lettreMotivation));
+        if (propositionService != null) {
+            model.addAttribute("propositionActive", propositionService.propositionActive(candidature.id).orElse(null));
+        }
         return "RH/candidature-detail";
+    }
+
+    @GetMapping("/rh/candidatures/{id}/proposition")
+    public String afficherFormulaireProposition(@PathVariable Integer id, Model model) {
+        Candidature candidature = trouverCandidature(id);
+        if (propositionService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de proposition n'est pas configuré");
+        }
+        if (!"RETENUE".equals(candidature.statut) && !"RESERVE".equals(candidature.statut)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Une proposition ne peut être préparée que pour un candidat retenu ou en réserve");
+        }
+        if (propositionService.propositionActive(id).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Une proposition est déjà en attente ou acceptée");
+        }
+        model.addAttribute("candidature", candidature);
+        model.addAttribute("salaireInitial", propositionService.salaireInitial(candidature));
+        model.addAttribute("dateDebutInitiale", propositionService.dateDebutInitiale(candidature));
+        model.addAttribute("typeContratInitial", "CE");
+        return "RH/proposition-embauche-form";
+    }
+
+    @PostMapping("/rh/candidatures/{id}/proposition")
+    public String envoyerProposition(@PathVariable Integer id,
+            @RequestParam BigDecimal salaireMensuel,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebutPrevue,
+            @RequestParam String typeContrat,
+            @RequestParam(required = false) String horaires,
+            @RequestParam(required = false) String lieuTravail,
+            @RequestParam(required = false) String autresConditions,
+            Principal principal) {
+        if (propositionService == null || utilisateurService == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Le service de proposition n'est pas configuré");
+        }
+        Candidature candidature = trouverCandidature(id);
+        propositionService.envoyer(candidature,
+                new PropositionEmbaucheRequest(salaireMensuel, dateDebutPrevue, typeContrat,
+                        horaires, lieuTravail, autresConditions),
+                utilisateurService.getConnecte(principal));
+        return "redirect:/rh/candidatures/" + id + "?proposition=envoyee";
     }
 
     @GetMapping("/rh/candidatures/{id}/cv")

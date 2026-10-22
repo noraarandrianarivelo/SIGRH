@@ -90,7 +90,7 @@ CREATE TABLE historique_validation (
 -- L'application autorise la création de l'offre seulement si la demande est VALIDEE.
 CREATE TABLE offre_emploi (
     id SERIAL PRIMARY KEY,
-    id_besoin_poste INTEGER NOT NULL UNIQUE REFERENCES besoin_poste(id),
+    id_besoin_poste INTEGER NOT NULL REFERENCES besoin_poste(id),
     titre VARCHAR(150) NOT NULL,
     description TEXT,
     date_creation DATE NOT NULL DEFAULT CURRENT_DATE,
