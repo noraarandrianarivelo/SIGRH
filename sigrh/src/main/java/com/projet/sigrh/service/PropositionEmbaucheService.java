@@ -15,6 +15,7 @@ import com.projet.sigrh.exception.BusinessException;
 import com.projet.sigrh.model.Candidature;
 import com.projet.sigrh.model.Candidat;
 import com.projet.sigrh.model.Contrat;
+import com.projet.sigrh.model.Affectation;
 import com.projet.sigrh.model.Employe;
 import com.projet.sigrh.model.OffreEmploi;
 import com.projet.sigrh.model.Poste;
@@ -23,6 +24,7 @@ import com.projet.sigrh.model.Utilisateur;
 import com.projet.sigrh.repository.CandidatureRepository;
 import com.projet.sigrh.repository.ContratRepository;
 import com.projet.sigrh.repository.BesoinPosteRepository;
+import com.projet.sigrh.repository.AffectationRepository;
 import com.projet.sigrh.repository.OffreEmploiRepository;
 import com.projet.sigrh.repository.PosteRepository;
 import com.projet.sigrh.repository.PropositionEmbaucheRepository;
@@ -42,12 +44,13 @@ public class PropositionEmbaucheService {
     private final ContratRepository contratRepository;
     private final PosteRepository posteRepository;
     private final BesoinPosteRepository besoinPosteRepository;
+    private final AffectationRepository affectationRepository;
 
     public PropositionEmbaucheService(PropositionEmbaucheRepository repository,
             DemandeRecrutementRepository demandeRepository, EmployeRepository employeRepository,
             CandidatureRepository candidatureRepository, OffreEmploiRepository offreRepository,
             ContratRepository contratRepository, PosteRepository posteRepository,
-            BesoinPosteRepository besoinPosteRepository) {
+            BesoinPosteRepository besoinPosteRepository, AffectationRepository affectationRepository) {
         this.repository = repository;
         this.demandeRepository = demandeRepository;
         this.employeRepository = employeRepository;
@@ -56,6 +59,7 @@ public class PropositionEmbaucheService {
         this.contratRepository = contratRepository;
         this.posteRepository = posteRepository;
         this.besoinPosteRepository = besoinPosteRepository;
+        this.affectationRepository = affectationRepository;
     }
 
     public BigDecimal salaireInitial(Candidature candidature) {
@@ -104,7 +108,8 @@ public class PropositionEmbaucheService {
         if ("ACCEPTEE".equals(statut)) {
             obtenirPoste(proposition.candidature);
             Employe employe = creerEmploye(proposition.candidature);
-            creerContrat(proposition, employe);
+            Contrat contrat = creerContrat(proposition, employe);
+            creerAffectation(contrat);
         } else {
             traiterRefus(proposition);
         }
@@ -175,6 +180,23 @@ public class PropositionEmbaucheService {
         contrat.lieuTravail = proposition.lieuTravail;
         contrat.conditions = proposition.autresConditions;
         return contratRepository.save(contrat);
+    }
+
+    private Affectation creerAffectation(Contrat contrat) {
+        if (affectationRepository.findByContratId(contrat.id).isPresent()) {
+            throw new BusinessException("Une affectation existe déjà pour ce contrat.", HttpStatus.CONFLICT);
+        }
+        if (affectationRepository.existsByEmployeIdAndDateFinIsNull(contrat.employe.getId())) {
+            throw new BusinessException("Cet employé possède déjà une affectation en cours.", HttpStatus.CONFLICT);
+        }
+        Affectation affectation = new Affectation();
+        affectation.employe = contrat.employe;
+        affectation.contrat = contrat;
+        affectation.poste = contrat.poste;
+        affectation.lieu = contrat.lieuTravail;
+        affectation.dateDebut = contrat.dateDebut;
+        affectation.motif = "Affectation initiale après création du contrat";
+        return affectationRepository.save(affectation);
     }
 
     private Poste obtenirPoste(Candidature candidature) {
