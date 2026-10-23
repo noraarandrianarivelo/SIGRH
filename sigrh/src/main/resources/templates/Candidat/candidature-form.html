@@ -1,53 +1,87 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${'Candidater — ' + offre.titre}">Envoyer une candidature — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace candidat</span>
-        </div>
-    </header>
 
-    <main class="container form-container">
-        <a class="back-link"
-           th:href="@{/candidat/offre-emploi/{id}(id=${offre.id})}"
-           href="#">← Retour à l'offre</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title th:text="${'Candidater — ' + offre.titre}">
+            Envoyer une candidature — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
 
-        <section class="panel" aria-labelledby="candidature-title">
-            <p class="eyebrow">Candidature</p>
-            <h1 id="candidature-title" th:text="${offre.titre}">Titre de l'offre</h1>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-            <form class="upload-form"
-                  th:action="@{/candidat/offre-emploi/{id}/candidature(id=${offre.id})}"
-                  method="post"
-                  enctype="multipart/form-data">
-                <div class="form-field">
-                    <label for="cv">CV <span aria-hidden="true">*</span></label>
-                    <input id="cv" name="cv" type="file" required aria-describedby="cv-help">
-                    <small id="cv-help">Fichier obligatoire.</small>
-                </div>
+        <main class="container form-container" id="main-content">
+            <a
+                class="back-link"
+                th:href="@{/candidat/offre-emploi/{id}(id=${offre.id})}"
+                href="#"
+            >
+                ← Retour à l'offre
+            </a>
 
-                <div class="form-field">
-                    <label for="lettreEncouragement">Lettre d'encouragement</label>
-                    <input id="lettreEncouragement" name="lettreEncouragement" type="file"
-                           aria-describedby="lettre-help">
-                    <small id="lettre-help">Fichier facultatif.</small>
-                </div>
+            <section class="panel" aria-labelledby="candidature-title">
+                <p class="eyebrow">
+                    Candidature
+                </p>
+                <h1 id="candidature-title" th:text="${offre.titre}">
+                    Titre de l'offre
+                </h1>
 
-                <div class="form-field">
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" rows="6"></textarea>
-                </div>
+                <form
+                    class="upload-form"
+                    th:action="@{/candidat/offre-emploi/{id}/candidature(id=${offre.id})}"
+                    method="post"
+                    enctype="multipart/form-data"
+                >
+                    <div class="form-field">
+                        <label for="cv">
+                            CV
+                            <span aria-hidden="true">
+                                *
+                            </span>
+                        </label>
 
-                <button class="button" type="submit">Envoyer la candidature</button>
-            </form>
-        </section>
-    </main>
-</body>
+                        <input id="cv" name="cv" type="file" required aria-describedby="cv-help">
+                        <small id="cv-help">
+                            Fichier obligatoire.
+                        </small>
+                    </div>
+                    <div class="form-field">
+                        <label for="lettreEncouragement">
+                            Lettre d'encouragement
+                        </label>
+
+                        <input
+                            id="lettreEncouragement"
+                            name="lettreEncouragement"
+                            type="file"
+                            aria-describedby="lettre-help"
+                        >
+                        <small id="lettre-help">
+                            Fichier facultatif.
+                        </small>
+                    </div>
+                    <div class="form-field">
+                        <label for="message">
+                            Message
+                        </label>
+
+                        <textarea id="message" name="message" rows="6">
+                        </textarea>
+                    </div>
+                    <button class="button" type="submit">
+                        Envoyer la candidature
+                    </button>
+                </form>
+
+            </section>
+
+        </main>
+    </body>
 </html>

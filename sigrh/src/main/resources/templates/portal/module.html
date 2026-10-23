@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title th:text="${module.label + ' — SIGRH'}">
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+            <header class="page-heading">
+                <div>
+                    <p class="eyebrow" th:text="${'ESPACE ' + module.number}">
+                    </p>
+                    <h1 th:text="${module.label}">
+                    </h1>
+                    <p class="muted" th:text="${module.description}">
+                    </p>
+                </div>
+                <a class="button button--secondary" th:href="@{/}">
+                    Tous les espaces
+                </a>
+            </header>
+
+            <!-- Présentation des écrans : aucun dossier ni résultat métier n'est révélé ici. -->
+
+            <section class="module-grid" aria-label="Écrans du module">
+                <article class="module-card access-card" th:each="item : ${module.items}" th:id="${item.key}">
+                    <div class="module-card__top">
+                        <span class="module-icon" aria-hidden="true">
+                            <svg class="icon">
+                                <use th:href="@{'/images/icons.svg#' + ${item.icon}}">
+                                </use>
+                            </svg>
+                        </span>
+                        <span class="badge" th:if="${item.available}">
+                            Disponible pour vous
+                        </span>
+                    </div>
+                    <h2 th:text="${item.label}">
+                    </h2>
+                    <p th:text="${item.description}">
+                    </p>
+                    <a class="button" th:if="${item.available}" th:href="@{${item.path}}">
+                        Ouvrir cet écran
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#arrow-right}">
+                            </use>
+                        </svg>
+                    </a>
+                    <p class="scope-pill" th:unless="${item.available}">
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#lock}">
+                            </use>
+                        </svg>
+                        <span th:text="${'Accès : ' + item.permission}">
+                        </span>
+                    </p>
+                </article>
+
+            </section>
+
+            <aside class="workspace-note">
+                <svg class="icon" aria-hidden="true">
+                    <use th:href="@{/images/icons.svg#people}">
+                    </use>
+                </svg>
+                <p>
+                    Vous découvrez le périmètre d’un autre service ?                     Ce guide vous aide à
+                    identifier l’écran et les personnes habilitées à intervenir.
+                </p>
+            </aside>
+        </main>
+    </body>
+</html>

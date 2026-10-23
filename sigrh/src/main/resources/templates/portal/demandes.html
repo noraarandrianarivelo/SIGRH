@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Demandes
+            &amp;
+            validations — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+        <script defer th:src="@{/js/demandes.js}">
+        </script>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+            <header class="page-heading">
+                <div>
+                    <p class="eyebrow">
+                        BESOINS EN PERSONNEL
+                    </p>
+                    <h1>
+                        Demandes
+                        &amp;
+                        validations
+                    </h1>
+                    <p class="muted">
+                        Exprimez vos besoins et suivez leur validation jusqu’à l’ouverture du recrutement.
+                    </p>
+                </div>
+                <a class="button button--secondary" th:href="@{/modules/besoins}">
+                    Repères du module
+                </a>
+            </header>
+
+            <p id="demande-feedback" role="status" hidden>
+            </p>
+
+            <!-- La création reste réservée au manager et à la Direction, comme dans le flux existant. -->
+
+            <section class="panel" id="sectionManager" hidden>
+                <h2 id="titreForm">
+                    Nouvelle demande de recrutement
+                </h2>
+
+                <form id="formDemande">
+                    <div class="demande-fields">
+                        <label class="form-field">
+                            Département
+                            <select id="departementId" onchange="changerDepartement()">
+                            </select>
+                        </label>
+
+                        <label class="form-field">
+                            Type de motif
+                            <select id="typeMotif">
+                                <option value="NOUVEAU_POSTE">
+                                    Nouveau poste
+                                </option>
+                                <option value="REMPLACEMENT">
+                                    Remplacement
+                                </option>
+                                <option value="NOUVEAU_SERVICE">
+                                    Nouveau service
+                                </option>
+                                <option value="AUTRE">
+                                    Autre
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="form-field">
+                            Date d’arrivée souhaitée
+                            <input type="date" id="dateArrivee">
+                        </label>
+
+                        <label class="form-field field-wide">
+                            Motif précis
+                            <input
+                                type="text"
+                                id="motif"
+                                placeholder="Ex. Renforcement de l’équipe de développement"
+                                required
+                            >
+                        </label>
+
+                    </div>
+                    <h3>
+                        Postes demandés
+                    </h3>
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        Poste
+                                    </th>
+                                    <th scope="col">
+                                        Effectif
+                                    </th>
+                                    <th scope="col">
+                                        Budget mensuel / MGA
+                                    </th>
+                                    <th scope="col">
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="lignes">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="demande-actions">
+                        <button class="button button--secondary" type="button" onclick="ajouterLigne()">
+                            Ajouter un poste
+                        </button>
+                        <button class="button" type="submit" id="btnEnregistrer">
+                            Enregistrer le brouillon
+                        </button>
+                        <button
+                            class="button button--secondary"
+                            type="button"
+                            id="btnAnnuler"
+                            onclick="annulerModification()"
+                            hidden
+                        >
+                            Annuler la modification
+                        </button>
+                    </div>
+                </form>
+
+            </section>
+
+            <!-- Les données et les actions restent filtrées par les autorisations du service. -->
+
+            <section class="panel">
+                <div class="table-toolbar">
+                    <h2>
+                        Suivi des demandes
+                    </h2>
+                    <button class="button button--secondary" type="button" onclick="chargerDemandes()">
+                        Actualiser
+                    </button>
+                </div>
+                <div class="table-wrap">
+
+                    <table id="tableDemandes">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    N°
+                                </th>
+                                <th scope="col">
+                                    Demandeur
+                                </th>
+                                <th scope="col">
+                                    Département
+                                </th>
+                                <th scope="col">
+                                    Motif
+                                </th>
+                                <th scope="col">
+                                    Postes
+                                </th>
+                                <th scope="col">
+                                    Arrivée
+                                </th>
+                                <th scope="col">
+                                    État
+                                    &amp;
+                                    historique
+                                </th>
+                                <th scope="col">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td colspan="8">
+                                    Chargement des demandes…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <noscript>
+                    <p class="info-message">
+                        Activez JavaScript pour consulter et traiter les demandes.
+                    </p>
+                </noscript>
+            </section>
+
+        </main>
+    </body>
+</html>

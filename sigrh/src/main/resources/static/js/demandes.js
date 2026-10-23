@@ -1,85 +1,5 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SIGRH - Bloc 1 : ouverture de recrutement</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 24px; background: #f4f6f9; color: #222; }
-        .barre { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 12px 18px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-        h1 { font-size: 20px; margin: 0; } h2 { font-size: 17px; }
-        section, .carte { background: #fff; padding: 14px 18px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-top: 18px; }
-        label { display: inline-block; margin: 4px 14px 4px 0; }
-        table { width: 100%; border-collapse: collapse; background: #fff; }
-        th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
-        th { background: #007bff; color: #fff; }
-        button { padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
-        .d-APPROUVEE { background: #28a745; color: #fff; } .d-A_CORRIGER { background: #ffc107; } .d-REJETEE { background: #dc3545; color: #fff; }
-        .statut { font-weight: bold; } .alerte { color: #c00; }
-        ul { margin: 0; padding-left: 18px; } small { color: #666; }
-    </style>
-</head>
-<body>
-    <div class="barre">
-        <h1>SIGRH - Bloc 1 : ouverture de recrutement</h1>
-        <div>
-            
-            <a href="rh/offres">Voir les offres d'emploi et les candidatures</a>
-            · <a href="/personnel">Personnel, contrats et intégration</a>
-            · <a href="/personnel/taches">Mes tâches</a>
-        </div>
-        <div>
-            Connecté : <strong id="userConnected">...</strong>
-            <form method="post" action="/logout" style="display:inline"><button type="submit">Déconnexion</button></form>
-        </div>
-    </div>
-
-    <!-- Visible pour MANAGER et DIRECTION -->
-    <section id="sectionManager" hidden>
-        <h2 id="titreForm">Nouvelle demande de recrutement</h2>
-        <form id="formDemande">
-            <label>Département
-                <select id="departementId" onchange="changerDepartement()"></select>
-            </label>
-            <label>Type de motif
-                <select id="typeMotif">
-                    <option value="NOUVEAU_POSTE">Nouveau poste</option>
-                    <option value="REMPLACEMENT">Remplacement (licenciement, retrait, démission)</option>
-                    <option value="NOUVEAU_SERVICE">Nouveau service</option>
-                    <option value="AUTRE">Autre</option>
-                </select>
-            </label>
-            <label>Date d'arrivée souhaitée <input type="date" id="dateArrivee"></label>
-            <br>
-            <label style="width:90%">Motif précis
-                <input type="text" id="motif" style="width:70%" placeholder="Ex : renforcement de l'équipe backend">
-            </label>
-
-            <h3>Postes demandés</h3>
-            <table>
-                <thead><tr><th>Poste</th><th>Effectif</th><th>Budget mensuel unitaire (Ar)</th><th></th></tr></thead>
-                <tbody id="lignes"></tbody>
-            </table>
-            <button type="button" onclick="ajouterLigne()">+ Ajouter un poste</button>
-            <br><br>
-            <button type="submit" id="btnEnregistrer">Enregistrer le brouillon</button>
-            <button type="button" id="btnAnnuler" onclick="annulerModification()" hidden>Annuler la modification</button>
-        </form>
-    </section>
-
-    <section>
-        <h2>Demandes</h2>
-        <button onclick="chargerDemandes()">Rafraîchir</button>
-        <table id="tableDemandes">
-            <thead>
-                <tr><th>N°</th><th>Demandeur</th><th>Département</th><th>Motif</th><th>Postes</th><th>Arrivée</th><th>Statut</th><th>Actions</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </section>
-
-<script>
-    const STATUTS = { BROUILLON: 'Brouillon', ATTENTE_RH: 'En attente RH', ATTENTE_FINANCE: 'En attente Finance',
+// Besoins en personnel : traitements existants, navigation commune et CSRF.
+const STATUTS = { BROUILLON: 'Brouillon', ATTENTE_RH: 'En attente RH', ATTENTE_FINANCE: 'En attente Finance',
         ATTENTE_DIRECTION: 'En attente Direction', A_CORRIGER: 'À corriger', VALIDEE: 'Validée', REJETEE: 'Rejetée' };
     const DECISIONS = { APPROUVEE: 'Approuver', A_CORRIGER: 'Demander une correction', REJETEE: 'Rejeter' };
     const MOTIFS = { NOUVEAU_POSTE: 'Nouveau poste', REMPLACEMENT: 'Remplacement', NOUVEAU_SERVICE: 'Nouveau service', AUTRE: 'Autre' };
@@ -96,7 +16,12 @@
 
     // Appel JSON : renvoie les données ou lève une Error avec le message du serveur.
     async function api(url, options = {}) {
-        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        const res = await fetch(url, {
+            ...options,
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken, ...options.headers }
+        });
         if (res.redirected && res.url.includes('/login')) { window.location.href = '/login'; throw new Error('Session expirée'); }
         const texte = await res.text();
         let data = null;
@@ -108,13 +33,12 @@
     async function demarrer() {
         try {
             utilisateur = await api('/api/auth/current-user');
-            document.getElementById('userConnected').textContent = utilisateur.nom + ' (' + utilisateur.role + ')';
             if (utilisateur.role === 'ROLE_MANAGER' || utilisateur.role === 'ROLE_DIRECTION') {
                 document.getElementById('sectionManager').hidden = false;
                 await chargerDepartements();
             }
             await chargerDemandes();
-        } catch (err) { alert(err.message); }
+        } catch (err) { notifier(err.message, true); }
     }
 
     // ---------- Formulaire ----------
@@ -145,7 +69,7 @@
                 <input class="l-libelle" placeholder="Libellé du nouveau poste" value="${esc(l.libellePostePropose || '')}"></td>
             <td><input type="number" class="l-effectif" min="1" value="${l.effectif || 1}" style="width:70px"></td>
             <td><input type="number" class="l-budget" min="0" step="1000" value="${l.budgetMensuelUnitaire ?? ''}"></td>
-            <td><button type="button" onclick="this.closest('tr').remove()">Retirer</button></td>`;
+            <td><button class="button button--secondary" type="button" onclick="this.closest('tr').remove()">Retirer</button></td>`;
         document.getElementById('lignes').appendChild(tr);
         majLibelle(tr.querySelector('.l-poste'));
     }
@@ -180,10 +104,10 @@
         try {
             await api(idEnModification ? '/api/recrutement/demandes/' + idEnModification : '/api/recrutement/demandes',
                 { method: idEnModification ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-            alert('Brouillon enregistré. Cliquez sur « Soumettre » dans la liste pour l\'envoyer.');
+            notifier('Brouillon enregistré. Cliquez sur « Soumettre » dans la liste pour l\'envoyer.', false);
             await annulerModification();
             await chargerDemandes();
-        } catch (err) { alert(err.message); }
+        } catch (err) { notifier(err.message, true); }
     });
 
     async function modifier(id) {
@@ -216,7 +140,7 @@
         try {
             demandes = await api('/api/recrutement/demandes');
             afficherDemandes();
-        } catch (err) { alert(err.message); }
+        } catch (err) { notifier(err.message, true); }
     }
 
     function afficherDemandes() {
@@ -232,7 +156,7 @@
                   + d.historique.map(h => `<li>${dateHeure(h.date)} - ${h.etape} - ${esc(h.validateur)} : <strong>${h.decision}</strong>${h.commentaire ? ' - ' + esc(h.commentaire) : ''}</li>`).join('')
                   + '</ul></details>' : '';
             let actions = '';
-            if (d.peutModifier) actions += `<button onclick="modifier(${d.id})">Modifier</button><button onclick="soumettre(${d.id})">Soumettre</button>`;
+            if (d.peutModifier) actions += `<button class="button button--secondary" onclick="modifier(${d.id})">Modifier</button><button class="button" onclick="soumettre(${d.id})">Soumettre</button>`;
             d.decisionsPossibles.forEach(dec => actions += `<button class="d-${dec}" onclick="decider(${d.id}, '${dec}')">${DECISIONS[dec]}</button>`);
 
             const tr = document.createElement('tr');
@@ -246,7 +170,7 @@
     async function soumettre(id) { 
         if (!confirm('Soumettre cette demande ? Elle ne sera plus modifiable.')) return;
         try { await api('/api/recrutement/demandes/' + id + '/soumettre', { method: 'PUT' }); await chargerDemandes(); }
-        catch (err) { alert(err.message); }
+        catch (err) { notifier(err.message, true); }
     }
 
     async function decider(id, decision) {
@@ -260,10 +184,16 @@
         try {
             await api('/api/recrutement/demandes/' + id + '/decision', { method: 'POST', body: JSON.stringify({ decision, commentaire }) });
             await chargerDemandes();
-        } catch (err) { alert(err.message); }
+        } catch (err) { notifier(err.message, true); }
+    }
+
+    function notifier(message, erreur) {
+        const zone = document.getElementById('demande-feedback');
+        zone.textContent = message;
+        zone.className = erreur ? 'error-message' : 'success-message';
+        zone.setAttribute('role', erreur ? 'alert' : 'status');
+        zone.hidden = false;
+        zone.scrollIntoView({ block: 'nearest' });
     }
 
     demarrer();
-</script>
-</body>
-</html>

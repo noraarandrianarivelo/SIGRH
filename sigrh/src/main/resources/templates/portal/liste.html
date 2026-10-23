@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title th:text="${titre + ' — SIGRH'}">
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+            <header class="page-heading">
+                <div>
+                    <p class="eyebrow" th:text="${navigation.section}">
+                    </p>
+                    <h1 th:text="${titre}">
+                    </h1>
+                    <p class="muted" th:text="${description}">
+                    </p>
+                </div>
+                <span class="scope-pill">
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{/images/icons.svg#shield}">
+                        </use>
+                    </svg>
+                    Votre périmètre
+                </span>
+            </header>
+
+            <!-- Les liens conduisent aux fiches et traitements existants. -->
+
+            <section class="panel">
+                <div class="table-toolbar">
+                    <h2 th:text="${titre}">
+                    </h2>
+                    <span class="table-count" th:text="${#lists.size(lignes) + ' résultat(s)'}">
+                    </span>
+                </div>
+                <div class="table-wrap" th:if="${!#lists.isEmpty(lignes)}">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th scope="col" th:each="column : ${colonnes}" th:text="${column.label}">
+                                </th>
+                                <th scope="col">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="row : ${lignes}">
+                                <td th:each="column : ${colonnes}">
+                                    <span
+                                        th:if="${column.key == 'statut' || column.key == 'situation'}"
+                                        class="badge"
+                                        th:attr="data-status=${row[column.key]}"
+                                        th:text="${row[column.key] ?: '—'}"
+                                    >
+                                    </span>
+                                    <span
+                                        th:unless="${column.key == 'statut' || column.key == 'situation'}"
+                                        th:text="${row[column.key] ?: '—'}"
+                                    >
+                                    </span>
+                                </td>
+                                <td>
+                                    <a class="action-link" th:href="@{${row.href}}" th:text="${action}">
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="empty-state" th:if="${#lists.isEmpty(lignes)}">
+                    Aucun résultat dans votre périmètre pour le moment.
+                </p>
+            </section>
+
+        </main>
+    </body>
+</html>

@@ -1,92 +1,145 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Détail de la séance — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace RH</span>
-        </div>
-    </header>
 
-    <main class="container">
-        <a class="back-link" th:href="@{/rh/evaluations}" href="#">← Retour aux séances</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Détail de la séance — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
 
-        <p class="success-message" th:if="${param.note}">L'évaluation a été enregistrée.</p>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <section class="panel" aria-labelledby="evaluation-title">
-            <header class="title-row">
-                <div>
-                    <p class="eyebrow" th:text="|Séance nº ${seance.id}|">Séance nº 1</p>
-                    <h1 id="evaluation-title"
-                        th:text="${seance.candidature.candidat.prenom + ' ' + seance.candidature.candidat.nom}">
-                        Prénom Nom
-                    </h1>
-                </div>
-                <span class="badge" th:text="${seance.statut}">PLANIFIEE</span>
-            </header>
+        <main class="container" id="main-content">
+            <a class="back-link" th:href="@{/rh/evaluations}" href="#">
+                ← Retour aux séances
+            </a>
+            <p class="success-message" th:if="${param.note}">
+                L'évaluation a été enregistrée.
+            </p>
 
-            <dl class="detail-grid">
-                <div>
-                    <dt>Candidature</dt>
-                    <dd>
-                        <a th:href="@{/rh/candidatures/{id}(id=${seance.candidature.id})}"
-                           th:text="|Candidature nº ${seance.candidature.id}|" href="#">Candidature nº 1</a>
-                    </dd>
-                </div>
-                <div>
-                    <dt>Offre</dt>
-                    <dd th:text="${seance.candidature.offre.titre}">Offre</dd>
-                </div>
-                <div>
-                    <dt>Évaluateur</dt>
-                    <dd th:text="${seance.evaluateur.nomComplet}">Évaluateur</dd>
-                </div>
-                <div>
-                    <dt>Date de l'entretien</dt>
-                    <dd th:text="${seance.dateEntretien != null ? seance.dateEntretien : 'Non planifié'}">
-                        Non planifié
-                    </dd>
-                </div>
-                <div>
-                    <dt>Lieu de l'entretien</dt>
-                    <dd th:text="${seance.lieuEntretien != null && !seance.lieuEntretien.isBlank() ? seance.lieuEntretien : 'Non renseigné'}">
-                        Non renseigné
-                    </dd>
-                </div>
-                <div>
-                    <dt>Test</dt>
-                    <dd th:text="${seance.test != null ? seance.test.description : 'Aucun test associé'}">
-                        Aucun test associé
-                    </dd>
-                </div>
-                <div>
-                    <dt>Niveau du test</dt>
-                    <dd th:text="${seance.test != null ? seance.test.niveau : '—'}">—</dd>
-                </div>
-                <div>
-                    <dt>Date du test</dt>
-                    <dd th:text="${seance.dateTest != null ? seance.dateTest : 'Non planifié'}">Non planifié</dd>
-                </div>
-                <div>
-                    <dt>Lieu du test</dt>
-                    <dd th:text="${seance.lieuTest != null && !seance.lieuTest.isBlank() ? seance.lieuTest : 'Non renseigné'}">
-                        Non renseigné
-                    </dd>
-                </div>
-            </dl>
+            <section class="panel" aria-labelledby="evaluation-title">
+                <header class="title-row">
+                    <div>
+                        <p class="eyebrow" th:text="|Séance nº ${seance.id}|">
+                            Séance nº 1
+                        </p>
+                        <h1
+                            id="evaluation-title"
+                            th:text="${seance.candidature.candidat.prenom + ' ' + seance.candidature.candidat.nom}"
+                        >
+                            Prénom Nom
+                        </h1>
+                    </div>
+                    <span class="badge" th:text="${seance.statut}" th:attr="data-status=${seance.statut}">
+                        PLANIFIEE
+                    </span>
+                </header>
 
-            <a class="button"
-               th:unless="${dejaEvaluee}"
-               th:href="@{/rh/evaluations/{id}/evaluer(id=${seance.id})}"
-               href="#">Évaluer</a>
-            <p class="muted" th:if="${dejaEvaluee}">Cette séance a déjà été évaluée.</p>
-        </section>
-    </main>
-</body>
+                <dl class="detail-grid">
+                    <div>
+                        <dt>
+                            Candidature
+                        </dt>
+                        <dd>
+                            <a
+                                th:href="@{/rh/candidatures/{id}(id=${seance.candidature.id})}"
+                                th:text="|Candidature nº ${seance.candidature.id}|"
+                                href="#"
+                            >
+                                Candidature nº 1
+                            </a>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Offre
+                        </dt>
+                        <dd th:text="${seance.candidature.offre.titre}">
+                            Offre
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Évaluateur
+                        </dt>
+                        <dd th:text="${seance.evaluateur.nomComplet}">
+                            Évaluateur
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Date de l'entretien
+                        </dt>
+                        <dd th:text="${seance.dateEntretien != null ? seance.dateEntretien : 'Non planifié'}">
+                            Non planifié
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Lieu de l'entretien
+                        </dt>
+                        <dd
+                            th:text="${seance.lieuEntretien != null && !seance.lieuEntretien.isBlank() ? seance.lieuEntretien : 'Non renseigné'}"
+                        >
+                            Non renseigné
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Test
+                        </dt>
+                        <dd th:text="${seance.test != null ? seance.test.description : 'Aucun test associé'}">
+                            Aucun test associé
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Niveau du test
+                        </dt>
+                        <dd th:text="${seance.test != null ? seance.test.niveau : '—'}">
+                            —
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Date du test
+                        </dt>
+                        <dd th:text="${seance.dateTest != null ? seance.dateTest : 'Non planifié'}">
+                            Non planifié
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Lieu du test
+                        </dt>
+                        <dd
+                            th:text="${seance.lieuTest != null && !seance.lieuTest.isBlank() ? seance.lieuTest : 'Non renseigné'}"
+                        >
+                            Non renseigné
+                        </dd>
+                    </div>
+                </dl>
+
+                <a
+                    class="button"
+                    th:unless="${dejaEvaluee}"
+                    th:href="@{/rh/evaluations/{id}/evaluer(id=${seance.id})}"
+                    href="#"
+                >
+                    Évaluer
+                </a>
+                <p class="muted" th:if="${dejaEvaluee}">
+                    Cette séance a déjà été évaluée.
+                </p>
+            </section>
+
+        </main>
+    </body>
 </html>

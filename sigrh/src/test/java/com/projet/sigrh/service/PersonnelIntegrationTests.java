@@ -199,7 +199,7 @@ class PersonnelIntegrationTests {
                 .param("etape","COMPTE").param("libelle","ERP test acteur").param("responsable","B4IT001")
                 .param("id_assignateur","B4DIR001").with(user("b4_rh").authorities(()->"ROLE_RH"))).andExpect(status().is3xxRedirection());
         assertEquals("B4RH001",db.queryForObject("SELECT id_assignateur FROM onboarding_tache WHERE libelle='ERP test acteur'",String.class));
-        mvc.perform(post("/login").param("username","b4_it").param("password","Bloc4Test2026!")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/index.html"));
+        mvc.perform(post("/login").with(csrf()).param("username","b4_it").param("password","Bloc4Test2026!")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/"));
     }
 
     @Test void signatureDirectionSurSaTacheSansAccesAuxAutresContrats() throws Exception {
@@ -333,13 +333,23 @@ class PersonnelIntegrationTests {
     }
 
     @Test void salarieConsulteSeulementSonDossierSansRoleManager() throws Exception {
-        int role=db.queryForObject("INSERT INTO role_user(role_name) VALUES ('ROLE_SALARIE_TEST') RETURNING id",Integer.class);
-        db.update("INSERT INTO utilisateur(username,password,id_role,id_employee) SELECT 'test_soa',password,?,'B4N001' FROM utilisateur WHERE username='b4_rh'",role);
-        mvc.perform(get("/personnel/employes/B4N001").with(user("test_soa").authorities(()->"ROLE_SALARIE_TEST"))).andExpect(status().isOk());
-        mvc.perform(get("/personnel/employes/B4N002").with(user("test_soa").authorities(()->"ROLE_SALARIE_TEST"))).andExpect(status().isForbidden());
+        var comptes=db.queryForList("SELECT u.username,r.role_name FROM utilisateur u JOIN role_user r ON r.id=u.id_role WHERE u.id_employee='B4N001'");
+        String login;
+        String roleNom;
+        if(comptes.isEmpty()) {
+            int role=db.queryForObject("INSERT INTO role_user(role_name) VALUES ('ROLE_SALARIE_TEST') RETURNING id",Integer.class);
+            db.update("INSERT INTO utilisateur(username,password,id_role,id_employee) SELECT 'test_soa',password,?,'B4N001' FROM utilisateur WHERE username='b4_rh'",role);
+            login="test_soa";
+            roleNom="ROLE_SALARIE_TEST";
+        } else {
+            login=(String)comptes.get(0).get("username");
+            roleNom=(String)comptes.get(0).get("role_name");
+        }
+        mvc.perform(get("/personnel/employes/B4N001").with(user(login).authorities(()->roleNom))).andExpect(status().isOk());
+        mvc.perform(get("/personnel/employes/B4N002").with(user(login).authorities(()->roleNom))).andExpect(status().isForbidden());
         int doc=nombre(documents.documents(rh,entree("B4N002")).get(0),"id");
-        mvc.perform(get("/personnel/documents/"+doc).with(user("test_soa").authorities(()->"ROLE_SALARIE_TEST"))).andExpect(status().isForbidden());
-        mvc.perform(post("/personnel/employes/B4N001/affectation").with(csrf()).param("poste",poste()+"").param("motif","Interdit").param("lieu","").with(user("test_soa").authorities(()->"ROLE_SALARIE_TEST"))).andExpect(status().isForbidden());
+        mvc.perform(get("/personnel/documents/"+doc).with(user(login).authorities(()->roleNom))).andExpect(status().isForbidden());
+        mvc.perform(post("/personnel/employes/B4N001/affectation").with(csrf()).param("poste",poste()+"").param("motif","Interdit").param("lieu","").with(user(login).authorities(()->roleNom))).andExpect(status().isForbidden());
     }
 
     MouvementRhService cibleJournal() { return org.springframework.test.util.AopTestUtils.getUltimateTargetObject(journal); }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Accès réservé — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container form-container" id="main-content">
+
+            <section class="panel">
+                <p class="eyebrow">
+                    ACCÈS RÉSERVÉ
+                </p>
+                <h1>
+                    Votre compte n’a pas accès à cet écran.
+                </h1>
+                <p class="muted">
+                    Retrouvez les espaces de l’application depuis le menu. Les présentations précisent le rôle
+                    nécessaire pour chaque écran.
+                </p>
+                <a class="button" th:href="@{/}">
+                    Revenir au tableau de bord
+                </a>
+            </section>
+
+        </main>
+    </body>
+</html>

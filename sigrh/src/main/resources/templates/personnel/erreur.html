@@ -8,13 +8,18 @@
             Opération refusée — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container form-container">
+        <main class="container form-container" id="main-content">
 
             <!-- Refus ou erreur de validation : message métier et liens de retour. -->
+
             <section class="panel">
                 <p class="eyebrow" th:text="${'Erreur '+code}">
                 </p>

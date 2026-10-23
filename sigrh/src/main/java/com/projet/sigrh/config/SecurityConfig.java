@@ -3,6 +3,7 @@ package com.projet.sigrh.config;
 import java.io.IOException;
 
 import com.projet.sigrh.model.Candidat;
+import com.projet.sigrh.controller.LoginController;
 import com.projet.sigrh.repository.CandidatRepository;
 import com.projet.sigrh.security.Roles;
 
@@ -14,6 +15,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -38,14 +42,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Les formulaires du bloc 4 sont protégés. Les anciens fetch du bloc 1
-            // restent compatibles ; leur migration CSRF est indépendante.
-            .csrf(csrf -> csrf.requireCsrfProtectionMatcher(request ->
-                (request.getRequestURI().substring(request.getContextPath().length()).startsWith("/personnel")
-                    || request.getRequestURI().substring(request.getContextPath().length()).startsWith("/rh/contrats"))
-                && !java.util.Set.of("GET","HEAD","OPTIONS","TRACE").contains(request.getMethod())))
+            // Tous les formulaires et les appels fetch envoient désormais un jeton CSRF.
+            .csrf(csrf -> {})
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+            .exceptionHandling(exceptions -> exceptions.accessDeniedPage("/acces-refuse"))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/fonts/**", "/favicon.ico", "/error").permitAll()
+                .requestMatchers("/candidat/**").hasAuthority(Roles.CANDIDAT)
                 .requestMatchers("/rh/**").hasAnyAuthority(Roles.RH, Roles.DIRECTION)
                 // Données de référence : seule la RH (ou la Direction) peut en ajouter.
                 .requestMatchers(HttpMethod.POST, "/api/postes", "/api/departements", "/api/grilles-salaires")
@@ -53,8 +56,17 @@ public class SecurityConfig {
                 .requestMatchers("/api/recrutement/demandes/*/decision")
                     .hasAnyAuthority(Roles.RH, Roles.FINANCE, Roles.DIRECTION)
                 .anyRequest().authenticated())
-            .formLogin(form -> form.successHandler(this::redirigerApresConnexion))
-            .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .successHandler(this::redirigerApresConnexion)
+                .failureHandler(this::echecConnexion)
+                .permitAll())
+            .logout(logout -> logout
+                .logoutSuccessUrl("/login?logout")
+                .deleteCookies("JSESSIONID")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true));
         return http.build();
     }
 
@@ -63,14 +75,31 @@ public class SecurityConfig {
         boolean estCandidat = authentication.getAuthorities().stream()
                 .anyMatch(authority -> Roles.CANDIDAT.equals(authority.getAuthority()));
 
+        request.getSession().removeAttribute(LoginController.LAST_USERNAME);
+        request.getSession().removeAttribute(LoginController.ERROR_KIND);
         if (!estCandidat) {
-            response.sendRedirect("/index.html");
+            response.sendRedirect("/");
             return;
         }
 
-        Candidat candidat = candidatRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ServletException("Aucun candidat associé à cet e-mail"));
+        Candidat candidat = candidatRepository.findByEmail(authentication.getName()).orElse(null);
+        if (candidat == null) {
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+            response.sendRedirect("/login?profile");
+            return;
+        }
         request.getSession().setAttribute("candidatConnecte", candidat);
         response.sendRedirect("/candidat/offre-emploi");
+    }
+
+    void echecConnexion(HttpServletRequest request, HttpServletResponse response,
+            AuthenticationException exception) throws IOException {
+        String username = request.getParameter("username");
+        request.getSession().setAttribute(LoginController.LAST_USERNAME,
+                username == null ? "" : username.trim().substring(0, Math.min(username.trim().length(), 150)));
+        request.getSession().setAttribute(LoginController.ERROR_KIND,
+                exception instanceof AuthenticationServiceException ? "service" : "credentials");
+        // Aucun détail d'exception, mot de passe ou existence de compte n'est envoyé au navigateur.
+        response.sendRedirect("/login?error");
     }
 }

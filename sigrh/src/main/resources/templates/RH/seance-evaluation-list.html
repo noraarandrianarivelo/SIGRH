@@ -1,69 +1,120 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Séances d'évaluation — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace RH</span>
-        </div>
-    </header>
 
-    <main class="container">
-        <a class="back-link" th:href="@{/rh/offres}" href="#">← Retour aux offres</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Séances d'évaluation — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
 
-        <section class="panel" aria-labelledby="evaluations-title">
-            <header class="title-row">
-                <div>
-                    <p class="eyebrow">Recrutement</p>
-                    <h1 id="evaluations-title">Séances d'évaluation</h1>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+            <a class="back-link" th:href="@{/rh/offres}" href="#">
+                ← Retour aux offres
+            </a>
+
+            <section class="panel" aria-labelledby="evaluations-title">
+                <header class="title-row">
+                    <div>
+                        <p class="eyebrow">
+                            Recrutement
+                        </p>
+                        <h1 id="evaluations-title">
+                            Séances d'évaluation
+                        </h1>
+                    </div>
+                </header>
+
+                <div class="table-wrap" th:if="${!#lists.isEmpty(seances)}">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    Référence
+                                </th>
+                                <th scope="col">
+                                    Candidat
+                                </th>
+                                <th scope="col">
+                                    Offre
+                                </th>
+                                <th scope="col">
+                                    Évaluateur
+                                </th>
+                                <th scope="col">
+                                    Entretien
+                                </th>
+                                <th scope="col">
+                                    Test
+                                </th>
+                                <th scope="col">
+                                    Statut
+                                </th>
+                                <th scope="col">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="seance : ${seances}">
+                                <td th:text="${seance.id}">
+                                    1
+                                </td>
+                                <td
+                                    th:text="${seance.candidature.candidat.prenom + ' ' + seance.candidature.candidat.nom}"
+                                >
+                                    Prénom Nom
+                                </td>
+                                <td th:text="${seance.candidature.offre.titre}">
+                                    Offre
+                                </td>
+                                <td th:text="${seance.evaluateur.nomComplet}">
+                                    Évaluateur
+                                </td>
+                                <td th:text="${seance.dateEntretien != null ? seance.dateEntretien : '—'}">
+                                    —
+                                </td>
+                                <td th:text="${seance.dateTest != null ? seance.dateTest : '—'}">
+                                    —
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge"
+                                        th:text="${seance.statut}"
+                                        th:attr="data-status=${seance.statut}"
+                                    >
+                                        PLANIFIEE
+                                    </span>
+                                </td>
+                                <td>
+                                    <a
+                                        class="action-link"
+                                        th:href="@{/rh/evaluations/{id}(id=${seance.id})}"
+                                        href="#"
+                                    >
+                                        Voir
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </header>
+                <p class="empty-state" th:if="${#lists.isEmpty(seances)}">
+                    Aucune séance d'évaluation enregistrée.
+                </p>
+            </section>
 
-            <div class="table-wrap" th:if="${!#lists.isEmpty(seances)}">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Référence</th>
-                            <th scope="col">Candidat</th>
-                            <th scope="col">Offre</th>
-                            <th scope="col">Évaluateur</th>
-                            <th scope="col">Entretien</th>
-                            <th scope="col">Test</th>
-                            <th scope="col">Statut</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="seance : ${seances}">
-                            <td th:text="${seance.id}">1</td>
-                            <td th:text="${seance.candidature.candidat.prenom + ' ' + seance.candidature.candidat.nom}">
-                                Prénom Nom
-                            </td>
-                            <td th:text="${seance.candidature.offre.titre}">Offre</td>
-                            <td th:text="${seance.evaluateur.nomComplet}">Évaluateur</td>
-                            <td th:text="${seance.dateEntretien != null ? seance.dateEntretien : '—'}">—</td>
-                            <td th:text="${seance.dateTest != null ? seance.dateTest : '—'}">—</td>
-                            <td><span class="badge" th:text="${seance.statut}">PLANIFIEE</span></td>
-                            <td>
-                                <a class="action-link"
-                                   th:href="@{/rh/evaluations/{id}(id=${seance.id})}"
-                                   href="#">Voir</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="empty-state" th:if="${#lists.isEmpty(seances)}">
-                Aucune séance d'évaluation enregistrée.
-            </p>
-        </section>
-    </main>
-</body>
+        </main>
+    </body>
 </html>

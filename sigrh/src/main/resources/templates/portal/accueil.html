@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Tableau de bord — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+
+            <!-- Les indicateurs utilisent exclusivement les données du périmètre autorisé. -->
+            <header class="page-heading">
+                <div>
+                    <p class="eyebrow">
+                        VOTRE ESPACE DE TRAVAIL
+                    </p>
+                    <h1 th:text="${'Bonjour, ' + navigation.firstName + '.'}">
+                    </h1>
+                    <p class="muted">
+                        Retrouvez vos actions et les espaces de votre parcours RH.
+                    </p>
+                </div>
+                <span class="date-pill">
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{/images/icons.svg#calendar}">
+                        </use>
+                    </svg>
+                    <span th:text="${dateDuJour}">
+                    </span>
+                </span>
+            </header>
+
+            <section class="indicator-grid" aria-label="Votre activité" th:if="${!#lists.isEmpty(indicateurs)}">
+                <a class="indicator-card" th:each="indicator : ${indicateurs}" th:href="@{${indicator.href}}">
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{'/images/icons.svg#' + ${indicator.icon}}">
+                        </use>
+                    </svg>
+                    <span class="indicator-card__label" th:text="${indicator.label}">
+                    </span>
+                    <strong th:text="${indicator.value}">
+                    </strong>
+                    <small th:text="${indicator.detail}">
+                    </small>
+                </a>
+            </section>
+
+            <!-- Le candidat dispose de liens personnels, sans accès aux dossiers internes. -->
+
+            <section class="panel" th:if="${navigation.candidate}">
+                <div class="title-row">
+                    <div>
+                        <p class="eyebrow">
+                            MON PARCOURS
+                        </p>
+                        <h2>
+                            Votre prochaine étape commence ici.
+                        </h2>
+                        <p class="muted">
+                            Consultez les offres disponibles ou retrouvez les propositions qui vous sont
+                            adressées.
+                        </p>
+                    </div>
+                </div>
+
+                <nav class="personnel-nav" aria-label="Mon espace candidat">
+                    <a th:href="@{/candidat/offre-emploi}">
+                        Offres disponibles
+                    </a>
+                    <a th:href="@{/candidat/propositions}">
+                        Mes propositions
+                    </a>
+                </nav>
+            </section>
+
+            <div class="section-heading">
+                <h2>
+                    Vos espaces RH
+                </h2>
+                <p>
+                    Du besoin en personnel à l’intégration
+                </p>
+            </div>
+
+            <!-- Chaque module reste découvrable, même lorsque ses écrans sont réservés à un autre rôle. -->
+
+            <section class="module-grid" aria-label="Les quatre espaces RH">
+                <article
+                    class="module-card"
+                    th:each="group : ${navigation.groups}"
+                    th:if="${group.number != ''}"
+                    th:attr="data-module=${group.key}"
+                >
+                    <div class="module-card__top">
+                        <span class="module-icon" aria-hidden="true">
+                            <svg class="icon">
+                                <use th:href="@{'/images/icons.svg#' + ${group.icon}}">
+                                </use>
+                            </svg>
+                        </span>
+                        <span class="module-number" th:text="${'ESPACE ' + group.number}">
+                        </span>
+                    </div>
+                    <h3 th:text="${group.label}">
+                    </h3>
+                    <p th:text="${group.description}">
+                    </p>
+
+                    <nav class="module-shortcuts" th:attr="aria-label=${group.label}">
+                        <a th:each="item : ${group.items}" th:href="@{${item.href}}">
+                            <span th:text="${item.label}">
+                            </span>
+                            <svg class="icon" aria-hidden="true" th:unless="${item.available}">
+                                <use th:href="@{/images/icons.svg#lock}">
+                                </use>
+                            </svg>
+                        </a>
+                    </nav>
+                    <footer class="module-card__footer">
+                        <a th:href="@{${group.overview}}">
+                            Découvrir l’espace
+                            <svg class="icon" aria-hidden="true">
+                                <use th:href="@{/images/icons.svg#arrow-right}">
+                                </use>
+                            </svg>
+                        </a>
+                        <small th:text="${#lists.size(group.items) + ' écran(s)'}">
+                        </small>
+                    </footer>
+                </article>
+
+            </section>
+
+            <aside class="workspace-note">
+                <svg class="icon" aria-hidden="true">
+                    <use th:href="@{/images/icons.svg#shield}">
+                    </use>
+                </svg>
+                <p>
+                    Tous les espaces sont visibles pour vous aider à vous repérer.                     Les
+                    données et les actions accessibles dépendent de votre rôle.
+                </p>
+            </aside>
+        </main>
+    </body>
+</html>

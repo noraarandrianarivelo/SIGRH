@@ -1,60 +1,100 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Offres d'emploi — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace candidat</span>
-        </div>
-    </header>
 
-    <main class="container">
-        <section class="panel" aria-labelledby="offres-title">
-            <header class="title-row">
-                <div>
-                    <p class="eyebrow">Recrutement</p>
-                    <h1 id="offres-title">Offres d'emploi</h1>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Offres d'emploi — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
+
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
+
+        <main class="container" id="main-content">
+
+            <section class="panel" aria-labelledby="offres-title">
+                <header class="title-row">
+                    <div>
+                        <p class="eyebrow">
+                            Recrutement
+                        </p>
+                        <h1 id="offres-title">
+                            Offres d'emploi
+                        </h1>
+                    </div>
+                    <a class="action-link" th:href="@{/candidat/propositions}" href="#">
+                        Mes propositions
+                    </a>
+                </header>
+
+                <div class="table-wrap" th:if="${!#lists.isEmpty(offres)}">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    Offre
+                                </th>
+                                <th scope="col">
+                                    Publication
+                                </th>
+
+                                <!-- <th scope="col">Date limite</th> -->
+                                <th scope="col">
+                                    Statut
+                                </th>
+                                <th scope="col">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="offre : ${offres}">
+                                <td th:text="${offre.titre}">
+                                    Titre de l'offre
+                                </td>
+                                <td
+                                    th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}"
+                                >
+                                    Non renseignée
+                                </td>
+
+                                <!-- <td th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</td> -->
+                                <td>
+                                    <span
+                                        class="badge"
+                                        th:text="${offre.statut}"
+                                        th:attr="data-status=${offre.statut}"
+                                    >
+                                        OUVERTE
+                                    </span>
+                                </td>
+                                <td>
+                                    <a
+                                        class="action-link"
+                                        th:href="@{/candidat/offre-emploi/{id}(id=${offre.id})}"
+                                        href="#"
+                                    >
+                                        Voir l'offre
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <a class="action-link" th:href="@{/candidat/propositions}" href="#">Mes propositions</a>
-            </header>
+                <p class="empty-state" th:if="${#lists.isEmpty(offres)}">
+                    Aucune offre d'emploi disponible.
+                </p>
+            </section>
 
-            <div class="table-wrap" th:if="${!#lists.isEmpty(offres)}">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Offre</th>
-                            <th scope="col">Publication</th>
-                            <!-- <th scope="col">Date limite</th> -->
-                            <th scope="col">Statut</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="offre : ${offres}">
-                            <td th:text="${offre.titre}">Titre de l'offre</td>
-                            <td th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}">Non renseignée</td>
-                            <!-- <td th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</td> -->
-                            <td><span class="badge" th:text="${offre.statut}">OUVERTE</span></td>
-                            <td>
-                                <a class="action-link"
-                                   th:href="@{/candidat/offre-emploi/{id}(id=${offre.id})}"
-                                   href="#">Voir l'offre</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="empty-state" th:if="${#lists.isEmpty(offres)}">
-                Aucune offre d'emploi disponible.
-            </p>
-        </section>
-    </main>
-</body>
+        </main>
+    </body>
 </html>

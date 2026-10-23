@@ -1,62 +1,89 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${offre.titre + ' — SIGRH'}">Détail de l'offre — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace candidat</span>
-        </div>
-    </header>
 
-    <main class="container">
-        <a class="back-link" th:href="@{/candidat/offre-emploi}" href="#">← Retour aux offres</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title th:text="${offre.titre + ' — SIGRH'}">
+            Détail de l'offre — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
 
-        <p class="success-message" th:if="${param.candidature}">
-            Votre candidature a bien été envoyée.
-        </p>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <article class="panel">
-            <header class="title-row">
-                <div>
-                    <p class="eyebrow">Offre d'emploi</p>
-                    <h1 th:text="${offre.titre}">Titre de l'offre</h1>
-                </div>
-                <span class="badge" th:text="${offre.statut}">OUVERTE</span>
-            </header>
+        <main class="container" id="main-content">
+            <a class="back-link" th:href="@{/candidat/offre-emploi}" href="#">
+                ← Retour aux offres
+            </a>
+            <p class="success-message" th:if="${param.candidature}">
+                Votre candidature a bien été envoyée.
+            </p>
+            <article class="panel">
+                <header class="title-row">
+                    <div>
+                        <p class="eyebrow">
+                            Offre d'emploi
+                        </p>
+                        <h1 th:text="${offre.titre}">
+                            Titre de l'offre
+                        </h1>
+                    </div>
+                    <span class="badge" th:text="${offre.statut}" th:attr="data-status=${offre.statut}">
+                        OUVERTE
+                    </span>
+                </header>
 
-            <dl class="detail-grid">
-                <div>
-                    <dt>Référence</dt>
-                    <dd th:text="${offre.id}">1</dd>
-                </div>
-                <div>
-                    <dt>Date de publication</dt>
-                    <dd th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}">Non renseignée</dd>
-                </div>
-                <!-- <div>
+                <dl class="detail-grid">
+                    <div>
+                        <dt>
+                            Référence
+                        </dt>
+                        <dd th:text="${offre.id}">
+                            1
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Date de publication
+                        </dt>
+                        <dd th:text="${offre.datePublication != null ? offre.datePublication : 'Non renseignée'}">
+                            Non renseignée
+                        </dd>
+                    </div>
+
+                    <!-- <div>
                     <dt>Date limite</dt>
                     <dd th:text="${offre.dateLimite != null ? offre.dateLimite : 'Non renseignée'}">Non renseignée</dd>
                 </div> -->
-            </dl>
-        </article>
+                </dl>
 
-        <section class="panel" aria-labelledby="description-title">
-            <h2 id="description-title">Description</h2>
-            <p class="description" th:text="${offre.description != null ? offre.description : 'Aucune description renseignée.'}">
-                Description de l'offre d'emploi.
-            </p>
-        </section>
+            </article>
 
-        <a class="button"
-           th:if="${offre.statut == 'OUVERT'}"
-           th:href="@{/candidat/offre-emploi/{id}/candidature(id=${offre.id})}"
-           href="#">Envoyer une candidature</a>
-    </main>
-</body>
+            <section class="panel" aria-labelledby="description-title">
+                <h2 id="description-title">
+                    Description
+                </h2>
+                <p
+                    class="description"
+                    th:text="${offre.description != null ? offre.description : 'Aucune description renseignée.'}"
+                >
+                    Description de l'offre d'emploi.
+                </p>
+            </section>
+
+            <a
+                class="button"
+                th:if="${offre.statut == 'OUVERT'}"
+                th:href="@{/candidat/offre-emploi/{id}/candidature(id=${offre.id})}"
+                href="#"
+            >
+                Envoyer une candidature
+            </a>
+        </main>
+    </body>
 </html>

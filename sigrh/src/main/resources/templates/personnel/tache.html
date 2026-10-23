@@ -8,13 +8,15 @@
             Réalisation de tâche — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
-        <header th:replace="~{personnel/fragments :: nav}">
-        </header>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container form-container">
+        <main class="container form-container" id="main-content">
 
             <section class="panel">
                 <p class="eyebrow" th:text="${tache.etape+' · #'+tache.id}">
@@ -25,7 +27,7 @@
                     th:text="${tache.salarie+' · '+tache.id_employe+' · contrat d’entrée #'+tache.id_contrat+' du '+tache.date_debut}"
                 >
                 </p>
-                <span class="badge" th:text="${tache.statut}">
+                <span class="badge" th:text="${tache.statut}" th:attr="data-status=${tache.statut}">
                 </span>
                 <p
                     th:text="${'Suivi du parcours : '+suivi.statut+' · '+suivi.nombre_etapes_terminees+'/'+suivi.nombre_etapes+' étapes terminées'}"
@@ -40,6 +42,7 @@
                 </p>
 
                 <!-- Changement d’état et réouverture ; la complétion utilise le formulaire métier ci-dessous. -->
+
                 <form
                     class="inline-form"
                     method="post"
@@ -65,6 +68,7 @@
                             </option>
                         </select>
                     </label>
+
                     <button class="button">
                         Enregistrer l'état
                     </button>
@@ -144,6 +148,7 @@
                                 PDF signé (facultatif, 10 Mio maximum)
                                 <input type="file" name="fichier" accept="application/pdf">
                             </label>
+
                         </div>
 
                         <!-- Badge : numéro de l’exemplaire effectivement remis. -->
@@ -173,6 +178,7 @@
                                     placeholder="Aucun mot de passe"
                                 >
                             </label>
+
                         </div>
 
                         <!-- Matériel ou formation : sélection de la référence précise dans le catalogue. -->
@@ -216,6 +222,7 @@
                             Je confirme que cette réalisation concerne ce salarié, ce parcours et le résultat
                             précis demandé.
                         </label>
+
                         <button class="button">
                             Valider la réalisation et terminer la tâche
                         </button>

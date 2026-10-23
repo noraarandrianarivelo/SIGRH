@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+
+        <!-- Ressources communes et jeton utilisé par les appels fetch du bloc besoins. -->
+        <th:block th:fragment="assets">
+            <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+            <meta name="_csrf" th:content="${_csrf.token}">
+            <meta name="_csrf_header" th:content="${_csrf.headerName}">
+            <script defer th:src="@{/js/application.js}">
+            </script>
+        </th:block>
+    </head>
+
+    <body>
+        <th:block th:fragment="navigation" th:if="${navigation != null}">
+            <a class="skip-link" href="#main-content">
+                Aller au contenu
+            </a>
+
+            <!-- Tous les espaces sont visibles ; les liens restreints expliquent leur périmètre. -->
+            <aside class="app-sidebar" id="app-sidebar" aria-label="Navigation principale">
+                <a class="sidebar-brand" th:href="@{/}">
+                    <span class="brand-mark" aria-hidden="true">
+                        <svg class="icon">
+                            <use th:href="@{/images/icons.svg#people}">
+                            </use>
+                        </svg>
+                    </span>
+                    <span>
+                        <strong>
+                            SIGRH
+                        </strong>
+                        <small>
+                            Ressources humaines
+                        </small>
+                    </span>
+                </a>
+                <div class="sidebar-workspace">
+                    <span class="workspace-dot" aria-hidden="true">
+                    </span>
+                    Espace de travail
+                    <span class="workspace-tag">
+                        RH
+                    </span>
+                </div>
+
+                <nav class="sidebar-navigation" aria-label="Espaces et écrans">
+
+                    <section class="nav-group" th:each="group : ${navigation.groups}">
+                        <h2 class="nav-group__label" th:text="${group.label}">
+                        </h2>
+                        <a
+                            class="sidebar-link"
+                            th:each="item : ${group.items}"
+                            th:href="@{${item.href}}"
+                            th:classappend="${item.active ? 'is-active' : ''}"
+                            th:attr="aria-current=${item.active ? 'page' : null},data-overview=${!item.available}"
+                            th:title="${item.available ? item.description : 'Découvrir cet écran · ' + item.permission}"
+                        >
+                            <svg class="icon" aria-hidden="true">
+                                <use th:href="@{'/images/icons.svg#' + ${item.icon}}">
+                                </use>
+                            </svg>
+                            <span th:text="${item.label}">
+                            </span>
+                            <svg class="icon nav-lock" aria-hidden="true" th:unless="${item.available}">
+                                <use th:href="@{/images/icons.svg#lock}">
+                                </use>
+                            </svg>
+                        </a>
+                    </section>
+
+                </nav>
+
+                <!-- Identité et déconnexion restent disponibles depuis toutes les pages. -->
+                <div class="sidebar-account">
+                    <span class="avatar" th:text="${navigation.initials}">
+                    </span>
+                    <div class="sidebar-account__name">
+                        <strong th:text="${navigation.name}">
+                        </strong>
+                        <small th:text="${navigation.roleLabel}">
+                        </small>
+                    </div>
+
+                    <form method="post" th:action="@{/logout}">
+                        <button
+                            class="sidebar-logout"
+                            type="submit"
+                            title="Se déconnecter"
+                            aria-label="Se déconnecter"
+                        >
+                            <svg class="icon" aria-hidden="true">
+                                <use th:href="@{/images/icons.svg#logout}">
+                                </use>
+                            </svg>
+                        </button>
+                    </form>
+
+                </div>
+            </aside>
+            <button class="sidebar-backdrop" type="button" data-sidebar-close aria-label="Fermer le menu">
+            </button>
+
+            <!-- Le fil d'Ariane conserve le contexte lorsque l'on passe d'un bloc à l'autre. -->
+            <header class="app-topbar">
+                <div class="topbar-location">
+                    <button
+                        class="icon-button menu-toggle"
+                        type="button"
+                        data-sidebar-toggle
+                        aria-controls="app-sidebar"
+                        aria-expanded="false"
+                        aria-label="Ouvrir le menu principal"
+                    >
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#menu}">
+                            </use>
+                        </svg>
+                    </button>
+
+                    <nav class="breadcrumbs" aria-label="Fil d’Ariane">
+                        <a th:href="@{/}">
+                            Espace de travail
+                        </a>
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#chevron-right}">
+                            </use>
+                        </svg>
+                        <span th:text="${navigation.section}">
+                        </span>
+                        <th:block th:if="${navigation.title != navigation.section}">
+                            <svg class="icon breadcrumb-detail" aria-hidden="true">
+                                <use th:href="@{/images/icons.svg#chevron-right}">
+                                </use>
+                            </svg>
+                            <strong class="breadcrumb-detail" th:text="${navigation.title}">
+                            </strong>
+                        </th:block>
+                    </nav>
+                </div>
+                <button class="screen-search-button" type="button" data-search-open hidden>
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{/images/icons.svg#search}">
+                        </use>
+                    </svg>
+                    <span>
+                        Rechercher un écran
+                    </span>
+                    <kbd>
+                        ⌘ / Ctrl K
+                    </kbd>
+                </button>
+            </header>
+
+            <!-- Recherche de navigation uniquement : aucune donnée personnelle n'est indexée ici. -->
+            <dialog class="screen-search" id="screen-search" aria-labelledby="screen-search-title">
+                <div class="screen-search__heading">
+                    <h2 id="screen-search-title">
+                        Où souhaitez-vous aller ?
+                    </h2>
+                    <button class="icon-button" type="button" data-search-close aria-label="Fermer la recherche">
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#close}">
+                            </use>
+                        </svg>
+                    </button>
+                </div>
+                <label class="sr-only" for="screen-search-input">
+                    Rechercher un écran ou un espace
+                </label>
+
+                <input
+                    id="screen-search-input"
+                    type="search"
+                    placeholder="Ex. contrats, évaluations, mes tâches…"
+                    autocomplete="off"
+                >
+                <div class="screen-search__results">
+                    <th:block th:each="group : ${navigation.groups}">
+                        <a
+                            class="screen-result"
+                            data-screen-result
+                            th:each="item : ${group.items}"
+                            th:href="@{${item.href}}"
+                        >
+                            <span>
+                                <strong th:text="${item.label}">
+                                </strong>
+                                <small
+                                    th:text="${group.label + ' · ' + (item.available ? 'Ouvrir l’écran' : 'Découvrir le module')}"
+                                >
+                                </small>
+                            </span>
+                            <svg class="icon" aria-hidden="true">
+                                <use th:href="@{/images/icons.svg#arrow-right}">
+                                </use>
+                            </svg>
+                        </a>
+                    </th:block>
+                    <p class="empty-state" id="screen-search-empty" role="status" hidden>
+                        Aucun écran trouvé. Essayez un autre mot-clé.
+                    </p>
+                </div>
+            </dialog>
+        </th:block>
+    </body>
+</html>

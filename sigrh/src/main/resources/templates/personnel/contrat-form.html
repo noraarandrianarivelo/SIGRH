@@ -8,13 +8,15 @@
             Préparer un contrat — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
-        <header th:replace="~{personnel/fragments :: nav}">
-        </header>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container form-container">
+        <main class="container form-container" id="main-content">
 
             <section class="panel">
                 <h1
@@ -35,6 +37,7 @@
                 </p>
 
                 <!-- Création ou modification du brouillon ; les valeurs du précédent préremplissent un renouvellement. -->
+
                 <form
                     class="upload-form"
                     method="post"
@@ -66,6 +69,7 @@
                             list="types"
                         >
                     </label>
+
                     <datalist id="types">
                         <option value="CDD">
                         </option>
@@ -112,6 +116,7 @@
                         <textarea name="conditions" maxlength="20000" rows="5" th:text="${form.conditions}">
                         </textarea>
                     </label>
+
                     <button class="button">
                         Enregistrer le brouillon
                     </button>

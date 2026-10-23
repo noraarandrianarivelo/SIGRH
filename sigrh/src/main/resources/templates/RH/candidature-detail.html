@@ -1,138 +1,228 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${'Candidature #' + candidature.id + ' — SIGRH'}">Détail de la candidature — SIGRH</title>
-    <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
-</head>
-<body>
-    <header class="topbar">
-        <div class="topbar__content">
-            <a class="brand" th:href="@{/}" href="#">SIGRH</a>
-            <span class="area-name">Espace RH</span>
-        </div>
-    </header>
 
-    <main class="container">
-        <a class="back-link"
-           th:href="@{/rh/offres/{id}(id=${candidature.offre.id})}"
-           href="#">← Retour à l'offre</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title th:text="${'Candidature #' + candidature.id + ' — SIGRH'}">
+            Détail de la candidature — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}" href="../../../../static/css/recrutement.css">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
+    </head>
 
-        <p class="success-message" th:if="${param.evaluation}">
-            La séance d'évaluation a bien été enregistrée.
-        </p>
-        <p class="success-message" th:if="${param.proposition}">
-            La proposition d'embauche a été envoyée.
-        </p>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <article class="panel">
-            <header class="title-row">
-                <div>
-                    <p class="eyebrow">Candidature</p>
-                    <h1>
-                        <span th:text="${candidature.candidat.prenom}">Prénom</span>
-                        <span th:text="${candidature.candidat.nom}">Nom</span>
-                    </h1>
-                </div>
-                <span class="badge" th:text="${candidature.statut}">RECUE</span>
-            </header>
-
-            <dl class="detail-grid">
-                <div>
-                    <dt>Référence</dt>
-                    <dd th:text="${candidature.id}">1</dd>
-                </div>
-                <div>
-                    <dt>Date de candidature</dt>
-                    <dd th:text="${candidature.dateCandidature}">2026-10-21T10:00</dd>
-                </div>
-                <div>
-                    <dt>Offre</dt>
-                    <dd th:text="${candidature.offre.titre}">Titre de l'offre</dd>
-                </div>
-            </dl>
-        </article>
-
-        <a class="button"
-           th:href="@{/rh/candidatures/{id}/evaluation(id=${candidature.id})}"
-           href="#">Arranger une évaluation</a>
-
-        <a class="button" th:if="${candidature.statut == 'RETENUE' && propositionActive == null}"
-           th:href="@{/rh/candidatures/{id}/proposition(id=${candidature.id})}"
-           href="#">Préparer une proposition d'embauche</a>
-        <p class="muted" th:if="${propositionActive != null}">
-            Une proposition est déjà <span th:text="${propositionActive.statut}">EN_ATTENTE</span>.
-        </p>
-
-        <section class="panel" aria-labelledby="candidate-title">
-            <h2 id="candidate-title">Informations du candidat</h2>
-            <dl class="detail-grid">
-                <div>
-                    <dt>E-mail</dt>
-                    <dd th:text="${candidature.candidat.email}">candidat@example.com</dd>
-                </div>
-                <div>
-                    <dt>Téléphone</dt>
-                    <dd th:text="${candidature.candidat.telephone != null ? candidature.candidat.telephone : 'Non renseigné'}">Non renseigné</dd>
-                </div>
-                <div>
-                    <dt>Date de naissance</dt>
-                    <dd th:text="${candidature.candidat.dateNaissance != null ? candidature.candidat.dateNaissance : 'Non renseignée'}">Non renseignée</dd>
-                </div>
-            </dl>
-        </section>
-
-        <section class="panel" aria-labelledby="qualifications-title">
-            <h2 id="qualifications-title">Qualifications</h2>
-            <p class="description"
-               th:text="${candidature.candidat.qualifications != null ? candidature.candidat.qualifications : 'Aucune qualification renseignée.'}">
-                Qualifications du candidat.
+        <main class="container" id="main-content">
+            <a
+                class="back-link"
+                th:href="@{/rh/offres/{id}(id=${candidature.offre.id})}"
+                href="#"
+            >
+                ← Retour à l'offre
+            </a>
+            <p class="success-message" th:if="${param.evaluation}">
+                La séance d'évaluation a bien été enregistrée.
             </p>
-        </section>
-
-        <section class="panel" aria-labelledby="message-title">
-            <h2 id="message-title">Message</h2>
-            <p class="description"
-               th:text="${candidature.message != null ? candidature.message : 'Aucun message.'}">
-                Message accompagnant la candidature.
+            <p class="success-message" th:if="${param.proposition}">
+                La proposition d'embauche a été envoyée.
             </p>
-        </section>
+            <article class="panel">
+                <header class="title-row">
+                    <div>
+                        <p class="eyebrow">
+                            Candidature
+                        </p>
+                        <h1>
+                            <span th:text="${candidature.candidat.prenom}">
+                                Prénom
+                            </span>
+                            <span th:text="${candidature.candidat.nom}">
+                                Nom
+                            </span>
+                        </h1>
+                    </div>
+                    <span
+                        class="badge"
+                        th:text="${candidature.statut}"
+                        th:attr="data-status=${candidature.statut}"
+                    >
+                        RECUE
+                    </span>
+                </header>
 
-        <section class="panel" aria-labelledby="documents-title">
-            <h2 id="documents-title">Documents</h2>
-            <div class="document-grid">
-                <article class="document-card">
-                    <h3>CV</h3>
-                    <iframe class="document-preview"
+                <dl class="detail-grid">
+                    <div>
+                        <dt>
+                            Référence
+                        </dt>
+                        <dd th:text="${candidature.id}">
+                            1
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Date de candidature
+                        </dt>
+                        <dd th:text="${candidature.dateCandidature}">
+                            2026-10-21T10:00
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Offre
+                        </dt>
+                        <dd th:text="${candidature.offre.titre}">
+                            Titre de l'offre
+                        </dd>
+                    </div>
+                </dl>
+
+            </article>
+
+            <a
+                class="button"
+                th:href="@{/rh/candidatures/{id}/evaluation(id=${candidature.id})}"
+                href="#"
+            >
+                Arranger une évaluation
+            </a>
+            <a
+                class="button"
+                th:if="${candidature.statut == 'RETENUE' && propositionActive == null}"
+                th:href="@{/rh/candidatures/{id}/proposition(id=${candidature.id})}"
+                href="#"
+            >
+                Préparer une proposition d'embauche
+            </a>
+            <p class="muted" th:if="${propositionActive != null}">
+                Une proposition est déjà
+                <span th:text="${propositionActive.statut}">
+                    EN_ATTENTE
+                </span>
+                .
+            </p>
+
+            <section class="panel" aria-labelledby="candidate-title">
+                <h2 id="candidate-title">
+                    Informations du candidat
+                </h2>
+
+                <dl class="detail-grid">
+                    <div>
+                        <dt>
+                            E-mail
+                        </dt>
+                        <dd th:text="${candidature.candidat.email}">
+                            candidat@example.com
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Téléphone
+                        </dt>
+                        <dd
+                            th:text="${candidature.candidat.telephone != null ? candidature.candidat.telephone : 'Non renseigné'}"
+                        >
+                            Non renseigné
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>
+                            Date de naissance
+                        </dt>
+                        <dd
+                            th:text="${candidature.candidat.dateNaissance != null ? candidature.candidat.dateNaissance : 'Non renseignée'}"
+                        >
+                            Non renseignée
+                        </dd>
+                    </div>
+                </dl>
+
+            </section>
+
+            <section class="panel" aria-labelledby="qualifications-title">
+                <h2 id="qualifications-title">
+                    Qualifications
+                </h2>
+                <p
+                    class="description"
+                    th:text="${candidature.candidat.qualifications != null ? candidature.candidat.qualifications : 'Aucune qualification renseignée.'}"
+                >
+                    Qualifications du candidat.
+                </p>
+            </section>
+
+            <section class="panel" aria-labelledby="message-title">
+                <h2 id="message-title">
+                    Message
+                </h2>
+                <p
+                    class="description"
+                    th:text="${candidature.message != null ? candidature.message : 'Aucun message.'}"
+                >
+                    Message accompagnant la candidature.
+                </p>
+            </section>
+
+            <section class="panel" aria-labelledby="documents-title">
+                <h2 id="documents-title">
+                    Documents
+                </h2>
+                <div class="document-grid">
+                    <article class="document-card">
+                        <h3>
+                            CV
+                        </h3>
+                        <iframe
+                            class="document-preview"
                             th:if="${cvAffichable}"
                             th:src="@{/rh/candidatures/{id}/cv(id=${candidature.id})}"
-                            title="Aperçu du CV"></iframe>
-                    <a class="action-link"
-                       th:href="@{/rh/candidatures/{id}/cv(id=${candidature.id})}"
-                       th:text="${cvAffichable ? 'Ouvrir le CV' : 'Télécharger le CV'}"
-                       target="_blank"
-                       rel="noopener">Télécharger le CV</a>
-                </article>
+                            title="Aperçu du CV"
+                        >
+                        </iframe>
+                        <a
+                            class="action-link"
+                            th:href="@{/rh/candidatures/{id}/cv(id=${candidature.id})}"
+                            th:text="${cvAffichable ? 'Ouvrir le CV' : 'Télécharger le CV'}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            Télécharger le CV
+                        </a>
+                    </article>
 
-                <article class="document-card" th:if="${candidature.lettreMotivation != null}">
-                    <h3>Lettre de motivation</h3>
-                    <iframe class="document-preview"
+                    <article class="document-card" th:if="${candidature.lettreMotivation != null}">
+                        <h3>
+                            Lettre de motivation
+                        </h3>
+                        <iframe
+                            class="document-preview"
                             th:if="${lettreAffichable}"
                             th:src="@{/rh/candidatures/{id}/lettre-motivation(id=${candidature.id})}"
-                            title="Aperçu de la lettre de motivation"></iframe>
-                    <a class="action-link"
-                       th:href="@{/rh/candidatures/{id}/lettre-motivation(id=${candidature.id})}"
-                       th:text="${lettreAffichable ? 'Ouvrir la lettre' : 'Télécharger la lettre'}"
-                       target="_blank"
-                       rel="noopener">Télécharger la lettre</a>
-                </article>
+                            title="Aperçu de la lettre de motivation"
+                        >
+                        </iframe>
+                        <a
+                            class="action-link"
+                            th:href="@{/rh/candidatures/{id}/lettre-motivation(id=${candidature.id})}"
+                            th:text="${lettreAffichable ? 'Ouvrir la lettre' : 'Télécharger la lettre'}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            Télécharger la lettre
+                        </a>
+                    </article>
 
-                <p class="muted" th:if="${candidature.lettreMotivation == null}">
-                    Aucune lettre de motivation fournie.
-                </p>
-            </div>
-        </section>
-    </main>
-</body>
+                    <p class="muted" th:if="${candidature.lettreMotivation == null}">
+                        Aucune lettre de motivation fournie.
+                    </p>
+                </div>
+            </section>
+
+        </main>
+    </body>
 </html>

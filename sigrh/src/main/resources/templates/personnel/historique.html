@@ -8,13 +8,15 @@
             Journal RH — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
-        <header th:replace="~{personnel/fragments :: nav}">
-        </header>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container">
+        <main class="container" id="main-content">
 
             <section class="panel">
                 <h1>
@@ -26,6 +28,7 @@
                 </p>
 
                 <!-- Filtres du journal : salarié concerné, objet métier et action. -->
+
                 <form class="filter-form" method="get" th:action="@{/personnel/historique}">
                     <label class="form-field">
                         Employé
@@ -63,6 +66,7 @@
                             </option>
                         </select>
                     </label>
+
                     <button class="button">
                         Filtrer
                     </button>
@@ -112,6 +116,7 @@
                 </article>
 
                 <!-- Pagination conservant les filtres actifs. -->
+
                 <nav class="personnel-nav">
                     <a
                         th:if="${page > 0}"

@@ -8,13 +8,15 @@
             Mes tâches — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
-        <header th:replace="~{personnel/fragments :: nav}">
-        </header>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container">
+        <main class="container" id="main-content">
 
             <section class="panel">
                 <p class="eyebrow">
@@ -28,6 +30,7 @@
                 </p>
 
                 <!-- Filtre de statut appliqué aux tâches du responsable connecté. -->
+
                 <form class="filter-form" method="get" th:action="@{/personnel/taches}">
                     <label>
                         Statut
@@ -44,6 +47,7 @@
                             </option>
                         </select>
                     </label>
+
                     <button class="button">
                         Filtrer
                     </button>

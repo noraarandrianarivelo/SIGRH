@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Connexion — SIGRH
+        </title>
+        <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <script defer th:src="@{/js/application.js}">
+        </script>
+    </head>
+
+    <body class="login-page">
+
+        <!-- Présentation de l'espace et repères du parcours RH. -->
+        <aside class="login-story" aria-label="SIGRH, votre espace de travail">
+            <a class="login-brand" th:href="@{/login}" aria-label="SIGRH, connexion">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg class="icon">
+                        <use th:href="@{/images/icons.svg#people}">
+                        </use>
+                    </svg>
+                </span>
+                SIGRH
+                <span class="brand-caption">
+                    Ressources humaines
+                </span>
+            </a>
+            <div class="login-story__content">
+                <span class="overline">
+                    UN ESPACE COMMUN, TOUT LE PARCOURS RH
+                </span>
+                <h1>
+                    Les bonnes personnes.
+                    <span>
+                        Les bons repères.
+                    </span>
+                </h1>
+                <p>
+                    Du premier besoin à l’intégration, retrouvez vos équipes,                     vos
+                    recrutements et vos actions dans un seul espace de travail.
+                </p>
+                <ol class="login-journey" aria-label="Les quatre espaces de SIGRH">
+                    <li>
+                        <span>
+                            01
+                        </span>
+                        Besoins en personnel
+                    </li>
+                    <li>
+                        <span>
+                            02
+                        </span>
+                        Recrutement
+                        &amp;
+                        évaluations
+                    </li>
+                    <li>
+                        <span>
+                            03
+                        </span>
+                        Propositions d’embauche
+                    </li>
+                    <li>
+                        <span>
+                            04
+                        </span>
+                        Personnel
+                        &amp;
+                        intégration
+                    </li>
+                </ol>
+            </div>
+            <p class="login-story__footer">
+                Un cadre clair pour avancer ensemble.
+            </p>
+        </aside>
+
+        <main class="login-main" id="main-content">
+            <div class="login-form-wrap">
+                <div class="login-secure">
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{/images/icons.svg#shield}">
+                        </use>
+                    </svg>
+                    Votre espace de travail
+                </div>
+                <h2>
+                    Heureux de vous retrouver.
+                </h2>
+                <p class="muted login-intro">
+                    Connectez-vous avec votre compte pour accéder à SIGRH.
+                </p>
+
+                <!-- Les erreurs restent génériques ; seul l'identifiant saisi est conservé. -->
+                <div class="error-message" role="alert" id="login-error" th:if="${loginError}">
+                    <svg class="icon" aria-hidden="true">
+                        <use th:href="@{/images/icons.svg#alert}">
+                        </use>
+                    </svg>
+                    <span th:text="${loginError}">
+                    </span>
+                </div>
+                <p class="success-message" role="status" th:if="${loginNotice}" th:text="${loginNotice}">
+                </p>
+
+                <!-- POST traité par Spring Security : BCrypt, session et jeton CSRF. -->
+
+                <form class="login-form" method="post" th:action="@{/login}">
+                    <label class="form-field" for="username">
+                        Identifiant ou adresse e-mail
+                    </label>
+
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        autocomplete="username"
+                        maxlength="150"
+                        required
+                        autofocus
+                        placeholder="Votre identifiant"
+                        th:value="${username}"
+                        th:attr="aria-invalid=${loginError != null},aria-describedby=${loginError != null ? 'login-error' : null}"
+                    >
+                    <label class="form-field" for="password">
+                        Mot de passe
+                    </label>
+
+                    <div class="password-field">
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                            placeholder="Votre mot de passe"
+                        >
+                        <button
+                            class="password-toggle"
+                            type="button"
+                            data-password-toggle="password"
+                            aria-label="Afficher le mot de passe"
+                            aria-pressed="false"
+                        >
+                            <svg class="icon" aria-hidden="true">
+                                <use th:href="@{/images/icons.svg#eye}">
+                                </use>
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="button login-submit" type="submit">
+                        Se connecter
+                        <svg class="icon" aria-hidden="true">
+                            <use th:href="@{/images/icons.svg#arrow-right}">
+                            </use>
+                        </svg>
+                    </button>
+                </form>
+
+                <p class="login-help">
+                    Besoin d’un accès ou d’aide pour votre compte ?
+                    <strong>
+                        Contactez votre service RH.
+                    </strong>
+                </p>
+            </div>
+            <footer class="login-footer">
+                SIGRH
+                <span aria-hidden="true">
+                    ·
+                </span>
+                Gestion des ressources humaines
+            </footer>
+        </main>
+    </body>
+</html>

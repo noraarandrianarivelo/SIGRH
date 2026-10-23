@@ -8,13 +8,15 @@
             Dossier salarié — SIGRH
         </title>
         <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+        <th:block th:replace="~{layout/shell :: assets}">
+        </th:block>
     </head>
 
-    <body>
-        <header th:replace="~{personnel/fragments :: nav}">
-        </header>
+    <body class="app-body">
+        <th:block th:replace="~{layout/shell :: navigation}">
+        </th:block>
 
-        <main class="container">
+        <main class="container" id="main-content">
 
             <section class="panel">
                 <p class="eyebrow" th:text="${employe.id}">
@@ -47,6 +49,7 @@
             </section>
 
             <!-- Contrats successifs : situation actuelle, contrats préparés et historique. -->
+
             <section id="contrats" class="panel">
                 <div class="title-row">
                     <h2>
@@ -69,11 +72,12 @@
                     <div class="title-row">
                         <h3 th:text="${'Contrat #'+c.id+' · '+c.type_contrat}">
                         </h3>
-                        <span class="badge" th:text="${c.situation}">
+                        <span class="badge" th:text="${c.situation}" th:attr="data-status=${c.situation}">
                         </span>
                     </div>
 
                     <!-- Conditions contractuelles et dates métier. -->
+
                     <dl class="detail-grid">
                         <div>
                             <dt>
@@ -145,6 +149,7 @@
                     </div>
 
                     <!-- Signature d’un brouillon avec document signé facultatif. -->
+
                     <details th:if="${acteur.rh() &amp;&amp; c.statut == 'BROUILLON'}">
                         <summary>
                             Enregistrer la signature
@@ -171,6 +176,7 @@
                                 Document signé (PDF, facultatif, 10 Mio maximum)
                                 <input type="file" name="fichier" accept="application/pdf">
                             </label>
+
                             <button class="button">
                                 Enregistrer la signature
                             </button>
@@ -205,6 +211,7 @@
                         </summary>
 
                         <!-- Ajout d’une pièce sans remplacer les documents précédents. -->
+
                         <form
                             class="upload-form"
                             method="post"
@@ -233,6 +240,7 @@
                                 PDF, 10 Mio maximum
                                 <input type="file" name="fichier" accept="application/pdf" required>
                             </label>
+
                             <button class="button">
                                 Ajouter le document
                             </button>
@@ -245,6 +253,7 @@
             </section>
 
             <!-- Historique des affectations et changement immédiat réservé aux RH. -->
+
             <section id="affectations" class="panel">
                 <h2>
                     Affectations
@@ -311,6 +320,7 @@
                     </p>
 
                     <!-- Nouvelle affectation aujourd’hui ; clôture de l’ancienne période à la veille. -->
+
                     <form
                         class="upload-form"
                         method="post"
@@ -353,6 +363,7 @@
                             <textarea name="motif" required maxlength="2000">
                             </textarea>
                         </label>
+
                         <button class="button">
                             Confirmer le changement effectif aujourd'hui
                         </button>
@@ -363,6 +374,7 @@
             </section>
 
             <!-- Parcours d’intégration rattachés aux contrats d’entrée, même après renouvellement. -->
+
             <section id="integration" class="panel">
                 <h2>
                     Onboarding / intégration
@@ -381,6 +393,7 @@
                         <span
                             class="badge"
                             th:text="${s.statut+' · '+s.nombre_etapes_terminees+'/'+s.nombre_etapes}"
+                            th:attr="data-status=${s.statut}"
                         >
                         </span>
                     </div>
@@ -416,6 +429,7 @@
                             </summary>
 
                             <!-- Correction du libellé ou réassignation de la même tâche. -->
+
                             <form
                                 class="upload-form"
                                 method="post"
@@ -444,6 +458,7 @@
                                         </option>
                                     </select>
                                 </label>
+
                                 <button class="button">
                                     Enregistrer l'attribution
                                 </button>
@@ -459,6 +474,7 @@
                         </summary>
 
                         <!-- Création d’une tâche nécessaire dans une des six étapes du parcours. -->
+
                         <form
                             class="upload-form"
                             method="post"
@@ -498,6 +514,7 @@
                                     </option>
                                 </select>
                             </label>
+
                             <p class="muted">
                                 Signature : RH ou Direction. Paie : RH ou Finance. Préparer d'abord le compte
                                 des autres responsables si nécessaire.
@@ -514,6 +531,7 @@
             </section>
 
             <!-- Ressources du salarié et restitutions, distinctes de l’intégration historique. -->
+
             <section id="ressources" class="panel">
                 <h2>
                     Ressources du salarié
@@ -538,6 +556,7 @@
                         </span>
 
                         <!-- Restitution tracée sans réouvrir l’intégration historique. -->
+
                         <form
                             class="inline-form"
                             th:if="${acteur.rh() &amp;&amp; r.containsKey('date_restitution') &amp;&amp; r.date_restitution == null}"
@@ -554,6 +573,7 @@
                                     th:max="${aujourdhui}"
                                 >
                             </label>
+
                             <button class="button">
                                 Confirmer la restitution
                             </button>
