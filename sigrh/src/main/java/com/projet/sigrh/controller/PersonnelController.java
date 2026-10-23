@@ -76,7 +76,8 @@ public class PersonnelController {
     String signature(@PathVariable int id,@RequestParam LocalDate date, @RequestParam(required=false) MultipartFile fichier,Principal p,RedirectAttributes flash) {
         var a=access.acteur(p); a.exigerRh();
         documents.signerAvecDocument(a,id,date,fichier);
-        return retour(texte(personnel.contrat(a,id),"id_employe"),flash,"La signature du contrat a été enregistrée.");
+        int document=documents.dernierDocument(a,id);
+        return "redirect:/personnel/documents/auto/"+id;
     }
     @PostMapping("/contrats/{id}/documents")
     String ajouterDocument(@PathVariable int id,@RequestParam String type,@RequestParam MultipartFile fichier,Principal p,RedirectAttributes flash) {
@@ -89,6 +90,13 @@ public class PersonnelController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).contentLength(java.nio.file.Files.size(fichier))
                 .header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename("contrat-document-"+id+".pdf").build().toString())
                 .header("X-Content-Type-Options","nosniff").body(new FileSystemResource(fichier));
+    }
+    @GetMapping("/documents/auto/{id}")
+    String telechargerPuisRetour(@PathVariable int id,Principal p,Model model) {
+        var a=access.acteur(p); var contrat=personnel.contrat(a,id);
+        model.addAttribute("documentId",documents.dernierDocument(a,id));
+        model.addAttribute("retour","/personnel/employes/"+texte(contrat,"id_employe"));
+        return "personnel/telechargement-contrat";
     }
     @PostMapping("/employes/{id}/affectation")
     String affectation(@PathVariable String id,@RequestParam int poste,@RequestParam(required=false) Integer contrat,
