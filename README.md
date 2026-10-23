@@ -22,7 +22,34 @@ psql -v ON_ERROR_STOP=1 -d sigrh_demo -f database/22-10-2026_01_bloc4_tables_man
 psql -v ON_ERROR_STOP=1 -d sigrh_demo -f database/22-10-2026_02_bloc4_donnees_test.sql
 ```
 
-Ces scripts ne remettent pas la base à zéro. Ne pas les rejouer sur une installation existante. Pour une base déjà installée, vérifier les objets présents et appliquer seulement le complément manquant. Les anciens scripts `bloc4.sql` ne sont pas la référence de cette implémentation. Les collaborateurs restent responsables des données initiales des blocs 1–3.
+Ces scripts historiques ne remettent pas la base à zéro. Ne pas les rejouer sur une installation existante. Pour une base déjà installée, vérifier les objets présents et appliquer seulement le complément manquant. Les anciens scripts `bloc4.sql` ne sont pas la référence de cette implémentation. Les collaborateurs restent responsables des données initiales des blocs 1–3.
+
+### Reconstruire toute la base avec un seul fichier
+
+Le script autonome [`database/reset_sigrh.sql`](database/reset_sigrh.sql) supprime la base `sigrh`, la recrée, installe les **31 tables et 2 vues**, puis charge les données de démonstration consolidées des blocs 1 à 4, y compris les accès salariés. Il n'utilise aucun fichier externe.
+
+**Cette commande efface toutes les données de la base cible.** Arrêter l'application avant de l'exécuter : les connexions existantes seront coupées. Depuis la racine du dépôt, avec un compte autorisé à supprimer et créer la base :
+
+```sh
+psql -X -h localhost -U postgres -d postgres -f database/reset_sigrh.sql
+```
+
+Pour reconstruire une autre base, préciser son nom :
+
+```sh
+psql -X -h localhost -U postgres -d postgres \
+  -v db_name=sigrh_demo -f database/reset_sigrh.sql
+```
+
+Ce fichier doit être exécuté avec **psql** ; il contient des commandes de connexion `\connect`. Ne pas utiliser `--single-transaction`, car PostgreSQL interdit `DROP DATABASE` et `CREATE DATABASE` dans une transaction. Le schéma et les insertions sont ensuite chargés ensemble dans une transaction, avec arrêt dès la première erreur. La base et les tables appartiennent au compte exécutant le script.
+
+Les anciens seeds se chevauchent : les départements/rôles communs et le poste « Chargé de recrutement » sont dédupliqués, les postes historiques distincts sont conservés avec des identifiants adaptés, et le `JOIN role_user` manquant dans le seed `0102` est rétabli. Les séquences sont recalées pour permettre les insertions suivantes. Les prototypes `database/bloc4.sql` et `Note/bloc4.sql` sont remplacés par le modèle actuel. Tous ces choix et les fichiers examinés sont détaillés en tête du script.
+
+Le chargement produit notamment **20 employés, 20 utilisateurs, 6 candidats, 5 offres, 4 contrats, 5 affectations, 22 tâches et 83 mouvements RH**. Les états de Soa, Rija et Lova restent ceux des fixtures. Les comptes `m_rakoto`, `rh_marie`, `fin_hery`, `dir_paul` conservent `password123`, désormais enregistré en BCrypt. Les comptes `b4_*` utilisent `Bloc4Test2026!`. Les autres empreintes historiques restent inchangées ; les fichiers source n'indiquent pas leur mot de passe en clair.
+
+Il s'agit des **données contenues dans les fichiers SQL du dépôt**, pas d'un export des enregistrements ajoutés depuis l'application. Les PDF/CV référencés restent des chemins de démonstration ; aucun fichier n'est créé ou effacé dans le stockage par le reset SQL.
+
+Le script a été vérifié le 23/10/2026 sur PostgreSQL 18 dans une instance isolée : premier chargement, reconstruction d'une base déjà remplie, suppression d'un enregistrement témoin, vérification des 30 séquences et des trois suivis d'onboarding. Le refus des noms de bases réservés a été vérifié. Six tests applicatifs existants (démarrage, scénarios, rendu des pages, renouvellement et paie) ont aussi réussi contre cette base reconstruite.
 
 Les PDF sont stockés sous `sigrh/uploads/contrats` lorsque le lancement est effectué depuis le module Maven. Configurer un chemin absolu persistant avec `SIGRH_CONTRAT_UPLOAD_DIR`. Ce dossier ne doit pas être exposé comme ressources statiques. Ajouts PDF uniquement, 10 Mio maximum, noms UUID, contrôle de signature `%PDF-`, téléchargement protégé et protection contre les chemins sortants/liens symboliques. Les anciennes pièces ne sont pas remplacées. Un échec transactionnel supprime le nouveau fichier ; un arrêt brutal du processus entre écriture et commit peut nécessiter le nettoyage manuel d'un fichier sans référence.
 
