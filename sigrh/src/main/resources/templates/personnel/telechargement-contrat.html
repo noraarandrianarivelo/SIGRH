@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><title>Téléchargement du contrat</title></head>
+<body>
+<p>Le contrat signé a été enregistré. Le téléchargement démarre automatiquement.</p>
+<a id="telecharger" th:href="@{/personnel/documents/{id}(id=${documentId})}">Télécharger le PDF</a>
+<a th:href="${retour}">Retour à la fiche salarié</a>
+<script>
+    window.addEventListener('load', () => {
+        document.getElementById('telecharger').click();
+        window.setTimeout(() => window.location.assign(document.querySelector('a[href]:last-of-type').href), 1500);
+    });
+</script>
+</body>
+</html>

@@ -144,7 +144,7 @@
                         </a>
                     </div>
 
-                    <!-- Signature d’un brouillon avec document signé facultatif. -->
+                    <!-- Signature du contrat et génération du PDF signé. -->
                     <details th:if="${acteur.rh() &amp;&amp; c.statut == 'BROUILLON'}">
                         <summary>
                             Enregistrer la signature
@@ -168,7 +168,7 @@
                             </label>
 
                             <label class="form-field">
-                                Document signé (PDF, facultatif, 10 Mio maximum)
+                                Document signé existant (PDF facultatif, 10 Mio maximum)
                                 <input type="file" name="fichier" accept="application/pdf">
                             </label>
                             <button class="button">
@@ -190,7 +190,8 @@
                             <span th:text="${d.type_document+' · '+d.date_ajout}">
                             </span>
                             —
-                            <a th:if="${d.disponible}" th:href="@{/personnel/documents/{id}(id=${d.id})}">
+                            <a th:if="${d.disponible}" th:href="@{/personnel/documents/{id}(id=${d.id})}"
+                               th:text="${d.type_document == 'CONTRAT_SIGNE' ? 'Télécharger le contrat signé' : 'Télécharger'}">
                                 Télécharger
                             </a>
                             <span th:unless="${d.disponible}" class="muted">
