@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Préparer un contrat — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container form-container">
+
+            <section class="panel">
+                <h1
+                    th:text="${form.id != null ? 'Modifier le brouillon' : form.precedent != null ? 'Préparer le renouvellement' : 'Préparer un contrat d’entrée'}"
+                >
+                </h1>
+                <p th:text="${employe.prenom+' '+employe.nom}">
+                </p>
+                <p
+                    th:if="${form.precedent != null}"
+                    th:text="${'Nouveau contrat succédant au #'+form.precedent+'. Les conditions précédentes sont proposées ci-dessous.'}"
+                >
+                </p>
+                <p th:if="${form.precedent == null}" class="muted">
+                    Un contrat d'entrée ouvre un parcours distinct. Pour une première embauche issue du
+                    recrutement, utiliser la proposition acceptée du bloc 3. Pour une évolution ordinaire,
+                    revenir au dossier et choisir « Préparer le renouvellement ».
+                </p>
+
+                <!-- Création ou modification du brouillon ; les valeurs du précédent préremplissent un renouvellement. -->
+                <form
+                    class="upload-form"
+                    method="post"
+                    th:action="@{/personnel/employes/{id}/contrat(id=${employe.id})}"
+                >
+                    <input type="hidden" name="id" th:value="${form.id}">
+                    <input type="hidden" name="precedent" th:value="${form.precedent}">
+                    <label class="form-field">
+                        Poste
+                        <select name="poste" required>
+                            <option
+                                th:each="p:${postes}"
+                                th:value="${p.id}"
+                                th:text="${p.libelle+' / '+p.departement}"
+                                th:selected="${p.id == form.poste}"
+                            >
+                            </option>
+                        </select>
+                    </label>
+
+                    <label class="form-field">
+                        Type de contrat
+                        <input
+                            type="text"
+                            name="type"
+                            maxlength="30"
+                            required
+                            th:value="${form.type}"
+                            list="types"
+                        >
+                    </label>
+                    <datalist id="types">
+                        <option value="CDD">
+                        </option>
+                        <option value="CDI">
+                        </option>
+                        <option value="CE">
+                        </option>
+                    </datalist>
+                    <label class="form-field">
+                        Date de début
+                        <input type="date" name="debut" required th:value="${form.debut}">
+                    </label>
+
+                    <label class="form-field">
+                        Date de fin (obligatoire pour un CDD)
+                        <input type="date" name="fin" th:value="${form.fin}">
+                    </label>
+
+                    <label class="form-field">
+                        Salaire mensuel de base (MGA)
+                        <input
+                            type="number"
+                            name="salaire"
+                            min="0"
+                            max="999999999999.99"
+                            step="0.01"
+                            required
+                            th:value="${form.salaire}"
+                        >
+                    </label>
+
+                    <label class="form-field">
+                        Horaires
+                        <input type="text" name="horaires" maxlength="150" th:value="${form.horaires}">
+                    </label>
+
+                    <label class="form-field">
+                        Lieu de travail
+                        <input type="text" name="lieu" maxlength="150" th:value="${form.lieu}">
+                    </label>
+
+                    <label class="form-field">
+                        Conditions
+                        <textarea name="conditions" maxlength="20000" rows="5" th:text="${form.conditions}">
+                        </textarea>
+                    </label>
+                    <button class="button">
+                        Enregistrer le brouillon
+                    </button>
+                    <a th:href="@{/personnel/employes/{id}(id=${employe.id})}">
+                        Retour au dossier
+                    </a>
+                </form>
+
+            </section>
+
+        </main>
+    </body>
+</html>

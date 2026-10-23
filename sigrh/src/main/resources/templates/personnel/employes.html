@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Personnel — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container">
+
+            <section class="panel">
+                <p class="eyebrow">
+                    Administration du personnel
+                </p>
+                <h1 th:text="${acteur.rh() ? 'Employés' : 'Mon dossier salarié'}">
+                </h1>
+                <p class="muted">
+                    Contrats successifs, affectations et intégration.
+                </p>
+                <p th:replace="~{personnel/fragments :: succes}">
+                </p>
+                <p th:if="${#lists.isEmpty(employes)}" class="empty-state">
+                    Aucun employé accessible.
+                </p>
+
+                <!-- Liste limitée au périmètre autorisé par le serveur. -->
+                <div class="table-wrap">
+
+                    <table th:if="${!#lists.isEmpty(employes)}">
+
+                        <thead>
+                            <tr>
+                                <th>
+                                    Identifiant
+                                </th>
+                                <th>
+                                    Nom
+                                </th>
+                                <th>
+                                    Dossier
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="e:${employes}">
+                                <td th:text="${e.id}">
+                                </td>
+                                <td th:text="${e.prenom + ' ' + e.nom}">
+                                </td>
+                                <td>
+                                    <a th:href="@{/personnel/employes/{id}(id=${e.id})}">
+                                        Consulter le dossier
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </body>
+</html>

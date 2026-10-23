@@ -87,8 +87,7 @@ public class RHController {
 
     @GetMapping("/rh/contrats")
     public String afficherContrats(Model model) {
-        model.addAttribute("contrats", contratService.lister());
-        return "RH/contrat-list";
+        return "redirect:/personnel";
     }
 
     @PostMapping("/rh/contrats/{id}/signer")

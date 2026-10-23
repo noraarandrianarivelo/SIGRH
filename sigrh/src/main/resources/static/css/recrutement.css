@@ -304,3 +304,17 @@ tbody tr:last-child td {
         grid-template-columns: 1fr;
     }
 }
+
+/* Personnel et intégration : composants partagés avec le recrutement. */
+.personnel-nav { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
+.contract-card { padding:1.25rem 0; border-top:1px solid var(--line); }
+.contract-card h3 { margin:0; }
+.step-card { padding:1rem; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere; }
+.task-row { padding:1rem 0; border-bottom:1px solid var(--line); }
+.inline-form { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-top:.75rem; }
+.form-field input[type="date"], .inline-form input, .filter-form input, .filter-form select { padding:.7rem; border:1px solid var(--line); border-radius:8px; background:var(--surface); font:inherit; }
+.filter-form { display:flex; gap:.75rem; flex-wrap:wrap; align-items:end; margin:1rem 0; }
+.error-message { padding:1rem; border:1px solid #fca5a5; border-radius:8px; background:#fef2f2; color:#991b1b; }
+summary { cursor:pointer; padding:.7rem 0; color:var(--blue); font-weight:600; }
+pre.snapshot { white-space:pre-wrap; overflow-wrap:anywhere; font-size:.8rem; background:var(--background); padding:1rem; border-radius:8px; }
+@media (max-width:680px) { .topbar__content { padding:.75rem 0; gap:.75rem; align-items:flex-start; flex-direction:column; } }

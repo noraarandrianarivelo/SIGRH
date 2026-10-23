@@ -143,8 +143,6 @@ public class ValidationService {
         }
         
         for (BesoinPoste l : besoin.getLignes()) {
-            for(int i = 0; i < l.getEffectif(); i++){
-
             if (l.getPoste() != null) {
                 continue;
             }
@@ -160,7 +158,6 @@ public class ValidationService {
                 throw new BusinessException("Le poste « " + poste.getLibelle() + " » apparaît deux fois dans ce besoin.");
             }
             l.setPoste(poste);
-            }
         }
     }
 }

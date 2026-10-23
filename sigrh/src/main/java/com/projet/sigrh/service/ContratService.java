@@ -16,9 +16,11 @@ import com.projet.sigrh.model.Utilisateur;
 @Service
 public class ContratService {
     private final ContratRepository repository;
+    private final PersonnelService personnel;
 
-    public ContratService(ContratRepository repository) {
+    public ContratService(ContratRepository repository, PersonnelService personnel) {
         this.repository = repository;
+        this.personnel = personnel;
     }
 
     @Transactional(readOnly = true)
@@ -29,14 +31,8 @@ public class ContratService {
     @Transactional
     public void signer(Integer contratId, Utilisateur utilisateur) {
         verifierDroit(utilisateur);
-        Contrat contrat = repository.findById(contratId)
-                .orElseThrow(() -> new BusinessException("Contrat introuvable.", HttpStatus.NOT_FOUND));
-        if (!"BROUILLON".equals(contrat.statut)) {
-            throw new BusinessException("Seul un contrat brouillon peut être signé.", HttpStatus.CONFLICT);
-        }
-        contrat.statut = "SIGNE";
-        contrat.dateSignature = LocalDate.now();
-        repository.save(contrat);
+        personnel.signer(new PersonnelAccess.Acteur(utilisateur.getEmploye().getId(),utilisateur.getRole()),
+                contratId, personnel.aujourdHui());
     }
 
     private void verifierDroit(Utilisateur utilisateur) {

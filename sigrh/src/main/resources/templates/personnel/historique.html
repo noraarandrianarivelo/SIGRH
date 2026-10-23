@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Journal RH — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container">
+
+            <section class="panel">
+                <h1>
+                    Historique des mouvements RH
+                </h1>
+                <p class="muted">
+                    Journal en lecture seule. Les réalisations récentes indiquent leur preuve exacte ; les
+                    traces anciennes peuvent ne pas comporter cette référence.
+                </p>
+
+                <!-- Filtres du journal : salarié concerné, objet métier et action. -->
+                <form class="filter-form" method="get" th:action="@{/personnel/historique}">
+                    <label class="form-field">
+                        Employé
+                        <input name="employe" th:value="${employeFiltre}" placeholder="Ex. B4N002">
+                    </label>
+
+                    <label class="form-field">
+                        Objet
+                        <select name="objet">
+                            <option value="">
+                                Tous
+                            </option>
+                            <option
+                                th:each="t:${ {'contrat','affectation','document_contrat','employe','onboarding_tache','compte_employe','badge_employe','materiel','materiel_employe','formation','formation_employe','inscription_paie'} }"
+                                th:value="${t}"
+                                th:text="${t}"
+                                th:selected="${objet == t}"
+                            >
+                            </option>
+                        </select>
+                    </label>
+
+                    <label class="form-field">
+                        Action
+                        <select name="action">
+                            <option value="">
+                                Toutes
+                            </option>
+                            <option
+                                th:each="a:${ {'CREATION','MODIFICATION','SUPPRESSION'} }"
+                                th:value="${a}"
+                                th:text="${a}"
+                                th:selected="${action == a}"
+                            >
+                            </option>
+                        </select>
+                    </label>
+                    <button class="button">
+                        Filtrer
+                    </button>
+                </form>
+
+                <p class="empty-state" th:if="${#lists.isEmpty(mouvements)}">
+                    Aucun mouvement pour ces filtres.
+                </p>
+
+                <!-- Mouvement audité avec comparaison des valeurs avant et après. -->
+                <article class="task-row" th:each="m:${mouvements}">
+                    <h2 th:text="${m.action+' · '+m.table_concernee+' #'+m.id_ligne}">
+                    </h2>
+                    <p
+                        th:text="${m.date_mouvement+' · acteur '+(m.acteur_nom ?: m.id_acteur)+' · salarié '+(m.id_employe_concerne ?: 'catalogue partagé')}"
+                    >
+                    </p>
+
+                    <details>
+                        <summary>
+                            Consulter les valeurs avant / après
+                        </summary>
+                        <div class="document-grid">
+                            <div>
+                                <strong>
+                                    Avant
+                                </strong>
+                                <pre
+                                    class="snapshot"
+                                    th:text="${m.avant_lisible ?: 'Création : aucun état précédent'}"
+                                >
+                                </pre>
+                            </div>
+                            <div>
+                                <strong>
+                                    Après
+                                </strong>
+                                <pre
+                                    class="snapshot"
+                                    th:text="${m.apres_lisible ?: 'Suppression : aucun état après'}"
+                                >
+                                </pre>
+                            </div>
+                        </div>
+                    </details>
+
+                </article>
+
+                <!-- Pagination conservant les filtres actifs. -->
+                <nav class="personnel-nav">
+                    <a
+                        th:if="${page > 0}"
+                        th:href="@{/personnel/historique(employe=${employeFiltre},objet=${objet},action=${action},page=${page - 1})}"
+                    >
+                        Page précédente
+                    </a>
+                    <a
+                        th:if="${#lists.size(mouvements) == 100}"
+                        th:href="@{/personnel/historique(employe=${employeFiltre},objet=${objet},action=${action},page=${page + 1})}"
+                    >
+                        Page suivante
+                    </a>
+                </nav>
+            </section>
+
+        </main>
+    </body>
+</html>

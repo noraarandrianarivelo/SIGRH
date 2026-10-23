@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Mes tâches — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container">
+
+            <section class="panel">
+                <p class="eyebrow">
+                    Intégration
+                </p>
+                <h1>
+                    Mes tâches
+                </h1>
+                <p class="muted">
+                    Seules les tâches dont vous êtes le responsable actuel sont affichées.
+                </p>
+
+                <!-- Filtre de statut appliqué aux tâches du responsable connecté. -->
+                <form class="filter-form" method="get" th:action="@{/personnel/taches}">
+                    <label>
+                        Statut
+                        <select name="statut">
+                            <option value="">
+                                Tous
+                            </option>
+                            <option
+                                th:each="s:${statuts}"
+                                th:value="${s}"
+                                th:text="${s}"
+                                th:selected="${s == statut}"
+                            >
+                            </option>
+                        </select>
+                    </label>
+                    <button class="button">
+                        Filtrer
+                    </button>
+                </form>
+
+                <p class="empty-state" th:if="${#lists.isEmpty(taches)}">
+                    Aucune tâche pour ce filtre.
+                </p>
+
+                <!-- Résultats et accès au formulaire de réalisation de chaque tâche. -->
+                <div class="table-wrap">
+
+                    <table th:unless="${#lists.isEmpty(taches)}">
+
+                        <thead>
+                            <tr>
+                                <th>
+                                    Salarié / parcours
+                                </th>
+                                <th>
+                                    Résultat attendu
+                                </th>
+                                <th>
+                                    Étape
+                                </th>
+                                <th>
+                                    État
+                                </th>
+                                <th>
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="t:${taches}">
+                                <td th:text="${t.salarie+' · entrée #'+t.id_contrat}">
+                                </td>
+                                <td th:text="${t.libelle}">
+                                </td>
+                                <td th:text="${t.etape}">
+                                </td>
+                                <td th:text="${t.statut}">
+                                </td>
+                                <td>
+                                    <a th:href="@{/personnel/taches/{id}(id=${t.id})}">
+                                        Ouvrir la tâche
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </body>
+</html>
