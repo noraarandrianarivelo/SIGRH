@@ -121,6 +121,8 @@
                                 <p th:if="${#lists.isEmpty(ligne.notes)}" class="muted">Aucune évaluation enregistrée.</p>
                                 <ul th:unless="${#lists.isEmpty(ligne.notes)}">
                                     <li th:each="note : ${ligne.notes}">
+                                        Évaluateur :
+                                        <strong th:text="${note.evaluateur != null ? note.evaluateur : '—'}">—</strong>,
                                         Entretien :
                                         <strong th:text="${note.noteEntretien != null ? note.noteEntretien + '/20' : '—'}">—</strong>,
                                         test :
