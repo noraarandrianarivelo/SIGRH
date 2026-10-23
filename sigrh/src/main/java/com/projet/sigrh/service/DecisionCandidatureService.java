@@ -114,7 +114,8 @@ public class DecisionCandidatureService {
                 fiche == null ? null : fiche.noteEntretien,
                 fiche == null ? null : fiche.noteTest,
                 fiche == null ? null : fiche.avis,
-                fiche == null ? null : fiche.commentaire);
+                fiche == null ? null : fiche.commentaire,
+                seance.evaluateur == null ? null : seance.evaluateur.getNomComplet());
     }
 
     private void verifierDirection(Utilisateur utilisateur) {

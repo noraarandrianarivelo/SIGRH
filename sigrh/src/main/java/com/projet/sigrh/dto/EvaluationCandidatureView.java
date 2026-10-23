@@ -8,6 +8,7 @@ import com.projet.sigrh.model.Candidature;
 
 public record EvaluationCandidatureView(Candidature candidature, List<NoteView> notes) {
     public record NoteView(LocalDateTime dateEntretien, LocalDateTime dateTest,
-            BigDecimal noteEntretien, BigDecimal noteTest, String avis, String commentaire) {
+            BigDecimal noteEntretien, BigDecimal noteTest, String avis, String commentaire,
+            String evaluateur) {
     }
 }
