@@ -17,16 +17,22 @@ INSERT INTO employe (id, nom, prenom, id_departement) VALUES
   ('E005', 'Rivo',    'Miora',    5);   -- manager Marketing
 
 INSERT INTO role_user (role_name) VALUES
-  ('ROLE_MANAGER'), ('ROLE_RH'), ('ROLE_FINANCE'), ('ROLE_DIRECTION'), ('CANDIDAT');
+  ('ROLE_MANAGER'), ('ROLE_RH'), ('ROLE_FINANCE'), ('ROLE_DIRECTION');
+
 
 
 
 INSERT INTO utilisateur (username, password, id_role, id_employee)
-SELECT v.username, '$2a$10$y.p1DuAOKG6XCoM.ySMAOeAUQk6rNRFxCxhyKFXbF1G9rLNEVlZW2', r.id, v.id_employee
+SELECT
+    v.username,
+    '$2a$10$y.p1DuAOKG6XCoM.ySMAOeAUQk6rNRFxCxhyKFXbF1G9rLNEVlZW2',
+    r.id,
+    v.id_employee
 FROM (VALUES
-  ('manager',     'ROLE_MANAGER',   'E001'),
-  ('manager_mkt', 'ROLE_MANAGER',   'E005'),
-  ('rh',          'ROLE_RH',        'E002'),
-  ('finance',     'ROLE_FINANCE',   'E003'),
-  ('direction',   'ROLE_DIRECTION', 'E004')
-) AS v(username, role_name, id_employee);
+    ('manager',     'ROLE_MANAGER',   'E001'),
+    ('manager_mkt', 'ROLE_MANAGER',   'E005'),
+    ('rh',          'ROLE_RH',        'E002'),
+    ('finance',     'ROLE_FINANCE',   'E003'),
+    ('direction',   'ROLE_DIRECTION', 'E004')
+) AS v(username, role_name, id_employee)
+JOIN role_user r ON r.role_name = v.role_name;
