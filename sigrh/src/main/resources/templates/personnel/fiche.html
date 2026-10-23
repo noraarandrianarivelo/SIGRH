@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Dossier salarié — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container">
+
+            <section class="panel">
+                <p class="eyebrow" th:text="${employe.id}">
+                </p>
+                <h1 th:text="${employe.prenom + ' ' + employe.nom}">
+                </h1>
+                <p class="muted">
+                    Salaire mensuel de base en MGA. Les dates de fin des périodes sont inclusives.
+                </p>
+
+                <nav class="personnel-nav">
+                    <a href="#contrats">
+                        Contrats
+                    </a>
+                    <a href="#affectations">
+                        Affectations
+                    </a>
+                    <a href="#integration">
+                        Intégration
+                    </a>
+                    <a href="#ressources">
+                        Ressources
+                    </a>
+                    <a th:if="${acteur.rh()}" th:href="@{/personnel/historique(employe=${employe.id})}">
+                        Journal du salarié
+                    </a>
+                </nav>
+                <p th:replace="~{personnel/fragments :: succes}">
+                </p>
+            </section>
+
+            <!-- Contrats successifs : situation actuelle, contrats préparés et historique. -->
+            <section id="contrats" class="panel">
+                <div class="title-row">
+                    <h2>
+                        Contrats successifs
+                    </h2>
+                    <a
+                        class="button"
+                        th:if="${acteur.rh()}"
+                        th:href="@{/personnel/employes/{id}/contrat(id=${employe.id})}"
+                    >
+                        Préparer un contrat d'entrée / réembauche
+                    </a>
+                </div>
+                <p class="empty-state" th:if="${#lists.isEmpty(contrats)}">
+                    Aucun contrat. Le premier dossier d'embauche est créé depuis la proposition acceptée.
+                </p>
+
+                <!-- Conditions et documents conservés pour chaque contrat. -->
+                <article class="contract-card" th:each="c:${contrats}" th:id="${'contrat-'+c.id}">
+                    <div class="title-row">
+                        <h3 th:text="${'Contrat #'+c.id+' · '+c.type_contrat}">
+                        </h3>
+                        <span class="badge" th:text="${c.situation}">
+                        </span>
+                    </div>
+
+                    <!-- Conditions contractuelles et dates métier. -->
+                    <dl class="detail-grid">
+                        <div>
+                            <dt>
+                                Poste
+                            </dt>
+                            <dd th:text="${c.poste}">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>
+                                Période
+                            </dt>
+                            <dd th:text="${c.date_debut+' → '+(c.date_fin ?: 'sans fin prévue')}">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>
+                                Salaire mensuel (MGA)
+                            </dt>
+                            <dd th:text="${c.salaire_mensuel}">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>
+                                Horaires
+                            </dt>
+                            <dd th:text="${c.horaires ?: 'Non renseignés'}">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>
+                                Lieu
+                            </dt>
+                            <dd th:text="${c.lieu_travail ?: 'Non renseigné'}">
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>
+                                Statut / signature
+                            </dt>
+                            <dd th:text="${c.statut+' / '+(c.date_signature ?: 'non signée')}">
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <p class="description" th:text="${c.conditions}">
+                    </p>
+                    <p th:if="${c.id_contrat_precedent != null}">
+                        Précédent :
+                        <a
+                            th:href="${'#contrat-'+c.id_contrat_precedent}"
+                            th:text="${'#'+c.id_contrat_precedent}"
+                        >
+                        </a>
+                    </p>
+                    <div th:if="${acteur.rh()}" class="personnel-nav">
+                        <a
+                            th:if="${c.statut == 'BROUILLON'}"
+                            th:href="@{/personnel/employes/{id}/contrat(id=${employe.id},modifier=${c.id})}"
+                        >
+                            Modifier le brouillon
+                        </a>
+                        <a
+                            th:if="${(c.statut == 'SIGNE' || c.statut == 'TERMINE') &amp;&amp; c.date_fin != null}"
+                            th:href="@{/personnel/employes/{id}/contrat(id=${employe.id},precedent=${c.id})}"
+                        >
+                            Préparer le renouvellement
+                        </a>
+                    </div>
+
+                    <!-- Signature d’un brouillon avec document signé facultatif. -->
+                    <details th:if="${acteur.rh() &amp;&amp; c.statut == 'BROUILLON'}">
+                        <summary>
+                            Enregistrer la signature
+                        </summary>
+
+                        <form
+                            class="upload-form"
+                            method="post"
+                            enctype="multipart/form-data"
+                            th:action="@{/personnel/contrats/{id}/signature(id=${c.id})}"
+                        >
+                            <label class="form-field">
+                                Date de signature réelle
+                                <input
+                                    type="date"
+                                    name="date"
+                                    required
+                                    th:max="${aujourdhui}"
+                                    th:value="${aujourdhui}"
+                                >
+                            </label>
+
+                            <label class="form-field">
+                                Document signé (PDF, facultatif, 10 Mio maximum)
+                                <input type="file" name="fichier" accept="application/pdf">
+                            </label>
+                            <button class="button">
+                                Enregistrer la signature
+                            </button>
+                        </form>
+
+                    </details>
+
+                    <!-- Pièces contractuelles : téléchargement protégé ou indisponibilité explicite. -->
+                    <h4>
+                        Documents
+                    </h4>
+                    <p class="muted" th:if="${#lists.isEmpty(documents[c.id])}">
+                        Aucun document.
+                    </p>
+                    <ul>
+                        <li th:each="d:${documents[c.id]}">
+                            <span th:text="${d.type_document+' · '+d.date_ajout}">
+                            </span>
+                            —
+                            <a th:if="${d.disponible}" th:href="@{/personnel/documents/{id}(id=${d.id})}">
+                                Télécharger
+                            </a>
+                            <span th:unless="${d.disponible}" class="muted">
+                                Document indisponible dans le stockage
+                            </span>
+                        </li>
+                    </ul>
+
+                    <details th:if="${acteur.rh()}">
+                        <summary>
+                            Ajouter une pièce
+                        </summary>
+
+                        <!-- Ajout d’une pièce sans remplacer les documents précédents. -->
+                        <form
+                            class="upload-form"
+                            method="post"
+                            enctype="multipart/form-data"
+                            th:action="@{/personnel/contrats/{id}/documents(id=${c.id})}"
+                        >
+                            <label class="form-field">
+                                Type
+                                <select name="type">
+                                    <option value="CONTRAT_PDF">
+                                        Contrat PDF
+                                    </option>
+                                    <option value="CONTRAT_SIGNE">
+                                        Contrat signé
+                                    </option>
+                                    <option value="PIECE_IDENTITE">
+                                        Pièce d'identité
+                                    </option>
+                                    <option value="AUTRE">
+                                        Autre pièce
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label class="form-field">
+                                PDF, 10 Mio maximum
+                                <input type="file" name="fichier" accept="application/pdf" required>
+                            </label>
+                            <button class="button">
+                                Ajouter le document
+                            </button>
+                        </form>
+
+                    </details>
+
+                </article>
+
+            </section>
+
+            <!-- Historique des affectations et changement immédiat réservé aux RH. -->
+            <section id="affectations" class="panel">
+                <h2>
+                    Affectations
+                </h2>
+                <p class="empty-state" th:if="${#lists.isEmpty(affectations)}">
+                    Aucune affectation.
+                </p>
+                <div class="table-wrap">
+
+                    <table th:if="${!#lists.isEmpty(affectations)}">
+
+                        <thead>
+                            <tr>
+                                <th>
+                                    Situation
+                                </th>
+                                <th>
+                                    Poste / département
+                                </th>
+                                <th>
+                                    Lieu
+                                </th>
+                                <th>
+                                    Période
+                                </th>
+                                <th>
+                                    Origine / motif
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="a:${affectations}">
+                                <td th:text="${a.situation}">
+                                </td>
+                                <td th:text="${a.poste+' / '+a.departement}">
+                                </td>
+                                <td th:text="${a.lieu}">
+                                </td>
+                                <td th:text="${a.date_debut+' → '+(a.date_fin ?: 'sans fin prévue')}">
+                                </td>
+                                <td>
+                                    <a
+                                        th:if="${a.id_contrat != null}"
+                                        th:href="${'#contrat-'+a.id_contrat}"
+                                        th:text="${'Contrat #'+a.id_contrat}"
+                                    >
+                                    </a>
+                                    <p th:text="${a.motif}">
+                                    </p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <details th:if="${acteur.rh()}">
+                    <summary>
+                        Changer l'affectation aujourd'hui
+                    </summary>
+                    <p class="muted">
+                        L'ancienne période sera clôturée hier. Les mobilités futures ne sont pas planifiées
+                        depuis cet écran.
+                    </p>
+
+                    <!-- Nouvelle affectation aujourd’hui ; clôture de l’ancienne période à la veille. -->
+                    <form
+                        class="upload-form"
+                        method="post"
+                        th:action="@{/personnel/employes/{id}/affectation(id=${employe.id})}"
+                    >
+                        <label class="form-field">
+                            Nouveau poste / département
+                            <select name="poste" required>
+                                <option
+                                    th:each="p:${postes}"
+                                    th:value="${p.id}"
+                                    th:text="${p.libelle+' / '+p.departement}"
+                                >
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="form-field">
+                            Contrat d'origine
+                            <select name="contrat">
+                                <option value="">
+                                    Sans contrat d'origine
+                                </option>
+                                <option
+                                    th:each="c:${contrats}"
+                                    th:value="${c.id}"
+                                    th:text="${'#'+c.id+' · '+c.type_contrat+' · '+c.date_debut}"
+                                >
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="form-field">
+                            Lieu
+                            <input name="lieu" type="text" maxlength="150">
+                        </label>
+
+                        <label class="form-field">
+                            Motif
+                            <textarea name="motif" required maxlength="2000">
+                            </textarea>
+                        </label>
+                        <button class="button">
+                            Confirmer le changement effectif aujourd'hui
+                        </button>
+                    </form>
+
+                </details>
+
+            </section>
+
+            <!-- Parcours d’intégration rattachés aux contrats d’entrée, même après renouvellement. -->
+            <section id="integration" class="panel">
+                <h2>
+                    Onboarding / intégration
+                </h2>
+                <p class="muted">
+                    Chaque parcours reste attaché au contrat d'entrée. Un renouvellement conserve ce parcours.
+                    Toutes les tâches sont nécessaires.
+                </p>
+                <p class="empty-state" th:if="${#lists.isEmpty(suivis)}">
+                    Aucun contrat d'entrée.
+                </p>
+                <article class="contract-card" th:each="s:${suivis}">
+                    <div class="title-row">
+                        <h3 th:text="${'Intégration du '+s.date_debut+' · contrat d’entrée #'+s.id_contrat}">
+                        </h3>
+                        <span
+                            class="badge"
+                            th:text="${s.statut+' · '+s.nombre_etapes_terminees+'/'+s.nombre_etapes}"
+                        >
+                        </span>
+                    </div>
+                    <div class="document-grid">
+
+                        <!-- État de chaque étape calculé depuis ses tâches. -->
+                        <div class="step-card" th:each="e:${etapes}" th:if="${e.id_contrat == s.id_contrat}">
+                            <strong th:text="${e.etape}">
+                            </strong>
+                            <p th:text="${e.statut+' · '+e.nombre_terminees+'/'+e.nombre_taches+' tâche(s)'}">
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tâches du parcours : responsable, état et actions autorisées. -->
+                    <div th:each="t:${taches}" th:if="${t.id_contrat == s.id_contrat}" class="task-row">
+                        <strong th:text="${t.libelle}">
+                        </strong>
+                        <p th:text="${t.etape+' · '+t.statut+' · '+t.responsable}">
+                        </p>
+                        <p th:if="${t.date_completion != null}" th:text="${'Terminée le '+t.date_completion}">
+                        </p>
+                        <a
+                            th:if="${t.id_responsable == acteur.employe()}"
+                            th:href="@{/personnel/taches/{id}(id=${t.id})}"
+                        >
+                            Traiter ma tâche
+                        </a>
+
+                        <details th:if="${acteur.rh()}">
+                            <summary>
+                                Corriger le libellé / réassigner
+                            </summary>
+
+                            <!-- Correction du libellé ou réassignation de la même tâche. -->
+                            <form
+                                class="upload-form"
+                                method="post"
+                                th:action="@{/personnel/employes/{id}/taches/{tache}/attribution(id=${employe.id},tache=${t.id})}"
+                            >
+                                <label class="form-field">
+                                    Résultat attendu
+                                    <input
+                                        name="libelle"
+                                        type="text"
+                                        required
+                                        maxlength="200"
+                                        th:value="${t.libelle}"
+                                    >
+                                </label>
+
+                                <label class="form-field">
+                                    Responsable
+                                    <select name="responsable">
+                                        <option
+                                            th:each="r:${responsables}"
+                                            th:value="${r.id}"
+                                            th:text="${r.nom+' · '+r.role_name}"
+                                            th:selected="${r.id == t.id_responsable}"
+                                        >
+                                        </option>
+                                    </select>
+                                </label>
+                                <button class="button">
+                                    Enregistrer l'attribution
+                                </button>
+                            </form>
+
+                        </details>
+
+                    </div>
+
+                    <details th:if="${acteur.rh()}">
+                        <summary>
+                            Ajouter une tâche à ce parcours
+                        </summary>
+
+                        <!-- Création d’une tâche nécessaire dans une des six étapes du parcours. -->
+                        <form
+                            class="upload-form"
+                            method="post"
+                            th:action="@{/personnel/employes/{id}/taches(id=${employe.id})}"
+                        >
+                            <input type="hidden" name="contrat" th:value="${s.id_contrat}">
+                            <label class="form-field">
+                                Étape
+                                <select name="etape">
+                                    <option th:each="cat:${categories}" th:value="${cat}" th:text="${cat}">
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label class="form-field">
+                                Résultat précis attendu
+                                <input
+                                    type="text"
+                                    name="libelle"
+                                    required
+                                    maxlength="200"
+                                    placeholder="Ex. Remettre le téléphone inventaire 004"
+                                >
+                            </label>
+
+                            <label class="form-field">
+                                Responsable avec un compte actif
+                                <select name="responsable" required>
+                                    <option value="">
+                                        Choisir explicitement
+                                    </option>
+                                    <option
+                                        th:each="r:${responsables}"
+                                        th:value="${r.id}"
+                                        th:text="${r.nom+' · '+r.role_name}"
+                                    >
+                                    </option>
+                                </select>
+                            </label>
+                            <p class="muted">
+                                Signature : RH ou Direction. Paie : RH ou Finance. Préparer d'abord le compte
+                                des autres responsables si nécessaire.
+                            </p>
+                            <button class="button">
+                                Attribuer la tâche
+                            </button>
+                        </form>
+
+                    </details>
+
+                </article>
+
+            </section>
+
+            <!-- Ressources du salarié et restitutions, distinctes de l’intégration historique. -->
+            <section id="ressources" class="panel">
+                <h2>
+                    Ressources du salarié
+                </h2>
+                <p class="muted">
+                    Les ressources actuelles et les réalisations historiques de l'intégration sont distinctes.
+                    Une inscription paie confirmée ne constitue pas un paiement.
+                </p>
+                <article th:each="groupe:${ressources}">
+                    <h3 th:text="${groupe.key}">
+                    </h3>
+                    <p th:if="${#lists.isEmpty(groupe.value)}" class="muted">
+                        Aucun enregistrement.
+                    </p>
+                    <div class="task-row" th:each="r:${groupe.value}">
+                        <span th:text="${'#'+r.id+' · '+r.libelle+' · '+(r.date ?: 'non terminée')}">
+                        </span>
+                        <span
+                            th:if="${r.containsKey('date_restitution') &amp;&amp; r.date_restitution != null}"
+                            th:text="${' · Restitué le '+r.date_restitution}"
+                        >
+                        </span>
+
+                        <!-- Restitution tracée sans réouvrir l’intégration historique. -->
+                        <form
+                            class="inline-form"
+                            th:if="${acteur.rh() &amp;&amp; r.containsKey('date_restitution') &amp;&amp; r.date_restitution == null}"
+                            method="post"
+                            th:action="@{/personnel/employes/{id}/restitution/{type}/{attribution}(id=${employe.id},type=${r.type},attribution=${r.id})}"
+                        >
+                            <label>
+                                Date de restitution
+                                <input
+                                    type="date"
+                                    name="date"
+                                    required
+                                    th:value="${aujourdhui}"
+                                    th:max="${aujourdhui}"
+                                >
+                            </label>
+                            <button class="button">
+                                Confirmer la restitution
+                            </button>
+                        </form>
+
+                    </div>
+                </article>
+
+            </section>
+
+        </main>
+    </body>
+</html>

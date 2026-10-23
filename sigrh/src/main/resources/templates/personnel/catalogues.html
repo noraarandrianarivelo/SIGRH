@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Catalogues — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container">
+
+            <section class="panel">
+                <h1>
+                    Catalogues d'intégration
+                </h1>
+                <p class="muted">
+                    Chaque matériel est un exemplaire physique identifié. Les formations peuvent être suivies
+                    plusieurs fois. Les anciennes lignes restent conservées.
+                </p>
+                <p th:replace="~{personnel/fragments :: succes}">
+                </p>
+            </section>
+
+            <!-- Un catalogue par type : exemplaires physiques de matériel et formations. -->
+            <section class="panel" th:each="type:${ {'materiel','formation'} }">
+                <h2 th:text="${type == 'materiel' ? 'Matériel' : 'Formations'}">
+                </h2>
+
+                <!-- Ajout d’un élément au catalogue. -->
+                <form
+                    class="inline-form"
+                    method="post"
+                    th:action="@{/personnel/catalogues/{type}(type=${type})}"
+                >
+                    <label class="form-field">
+                        Nouvel élément
+                        <input name="nom" type="text" required maxlength="150">
+                    </label>
+                    <button class="button">
+                        Ajouter
+                    </button>
+                </form>
+
+                <!-- Correction des noms existants ; les lignes historiques sont conservées. -->
+                <div th:each="r:${type == 'materiel' ? materiel : formation}" class="task-row">
+                    <form
+                        class="inline-form"
+                        method="post"
+                        th:action="@{/personnel/catalogues/{type}(type=${type})}"
+                    >
+                        <input type="hidden" name="id" th:value="${r.id}">
+                        <label class="form-field">
+                            <span th:text="${'#'+r.id}">
+                            </span>
+                            <input type="text" name="nom" maxlength="150" required th:value="${r.nom}">
+                        </label>
+                        <button class="button">
+                            Corriger le nom
+                        </button>
+                    </form>
+
+                </div>
+            </section>
+
+        </main>
+    </body>
+</html>

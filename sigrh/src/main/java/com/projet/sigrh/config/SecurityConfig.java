@@ -38,9 +38,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Les appels fetch() de la page n'envoient pas de jeton CSRF : sans cette ligne,
-            // tous les POST/PUT sont refusés en 403.
-            .csrf(csrf -> csrf.disable())
+            // Les formulaires du bloc 4 sont protégés. Les anciens fetch du bloc 1
+            // restent compatibles ; leur migration CSRF est indépendante.
+            .csrf(csrf -> csrf.requireCsrfProtectionMatcher(request ->
+                (request.getRequestURI().substring(request.getContextPath().length()).startsWith("/personnel")
+                    || request.getRequestURI().substring(request.getContextPath().length()).startsWith("/rh/contrats"))
+                && !java.util.Set.of("GET","HEAD","OPTIONS","TRACE").contains(request.getMethod())))
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/rh/**").hasAnyAuthority(Roles.RH, Roles.DIRECTION)

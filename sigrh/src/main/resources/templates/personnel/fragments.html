@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <body>
+
+        <!-- Navigation partagée ; les liens de gestion sont réservés aux RH. -->
+        <header class="topbar" th:fragment="nav">
+            <div class="topbar__content">
+                <a class="brand" th:href="@{/index.html}">
+                    SIGRH
+                </a>
+
+                <nav class="personnel-nav" aria-label="Personnel">
+                    <a th:href="@{/personnel}">
+                        Personnel
+                    </a>
+                    <a th:href="@{/personnel/taches}">
+                        Mes tâches
+                    </a>
+                    <a th:if="${acteur.rh()}" th:href="@{/personnel/catalogues}">
+                        Catalogues
+                    </a>
+                    <a th:if="${acteur.rh()}" th:href="@{/personnel/historique}">
+                        Historique
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Confirmation affichée après une opération réussie. -->
+        <p th:fragment="succes" th:if="${succes}" class="success-message" role="status" th:text="${succes}">
+        </p>
+    </body>
+</html>

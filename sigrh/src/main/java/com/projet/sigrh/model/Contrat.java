@@ -28,6 +28,10 @@ public class Contrat {
     @JoinColumn(name = "id_employe", nullable = false)
     public Employe employe;
 
+    @ManyToOne
+    @JoinColumn(name = "id_contrat_precedent")
+    public Contrat precedent;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_poste", nullable = false)
     public Poste poste;

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Réalisation de tâche — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+        <header th:replace="~{personnel/fragments :: nav}">
+        </header>
+
+        <main class="container form-container">
+
+            <section class="panel">
+                <p class="eyebrow" th:text="${tache.etape+' · #'+tache.id}">
+                </p>
+                <h1 th:text="${tache.libelle}">
+                </h1>
+                <p
+                    th:text="${tache.salarie+' · '+tache.id_employe+' · contrat d’entrée #'+tache.id_contrat+' du '+tache.date_debut}"
+                >
+                </p>
+                <span class="badge" th:text="${tache.statut}">
+                </span>
+                <p
+                    th:text="${'Suivi du parcours : '+suivi.statut+' · '+suivi.nombre_etapes_terminees+'/'+suivi.nombre_etapes+' étapes terminées'}"
+                >
+                </p>
+                <p
+                    th:if="${tache.date_completion != null}"
+                    th:text="${'Réalisation enregistrée le '+tache.date_completion}"
+                >
+                </p>
+                <p th:replace="~{personnel/fragments :: succes}">
+                </p>
+
+                <!-- Changement d’état et réouverture ; la complétion utilise le formulaire métier ci-dessous. -->
+                <form
+                    class="inline-form"
+                    method="post"
+                    th:action="@{/personnel/taches/{id}/statut(id=${tache.id})}"
+                >
+                    <label>
+                        Changer l'état
+                        <select name="statut">
+                            <option
+                                th:if="${tache.statut == 'BLOQUEE' || tache.statut == 'TERMINEE'}"
+                                value="A_FAIRE"
+                            >
+                                À faire (réouverture)
+                            </option>
+                            <option th:if="${tache.statut != 'EN_COURS'}" value="EN_COURS">
+                                En cours / reprendre
+                            </option>
+                            <option
+                                th:if="${tache.statut == 'A_FAIRE' || tache.statut == 'EN_COURS'}"
+                                value="BLOQUEE"
+                            >
+                                Bloquée
+                            </option>
+                        </select>
+                    </label>
+                    <button class="button">
+                        Enregistrer l'état
+                    </button>
+                </form>
+
+                <p class="muted" th:if="${tache.statut == 'TERMINEE'}">
+                    Une réouverture conserve l'ancienne complétion dans le journal. Pour terminer à nouveau,
+                    sélectionnez explicitement le résultat.
+                </p>
+
+                <!-- Pièces accessibles pour la signature du contrat d’entrée de cette tâche. -->
+                <div th:if="${tache.etape == 'SIGNATURE_CONTRAT' &amp;&amp; peutRealiser}">
+                    <h2>
+                        Pièces du contrat d'entrée
+                    </h2>
+                    <ul>
+                        <li th:each="d:${documents}">
+                            <span th:text="${d.type_document}">
+                            </span>
+                            —
+                            <a th:if="${d.disponible}" th:href="@{/personnel/documents/{id}(id=${d.id})}">
+                                Télécharger
+                            </a>
+                            <span class="muted" th:unless="${d.disponible}">
+                                Document indisponible
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <p class="error-message" th:if="${!peutRealiser}">
+                    Votre rôle actuel ne permet pas de valider le résultat métier de cette étape. Demandez une
+                    réassignation RH.
+                </p>
+
+                <!-- Réalisation précise attendue avant de terminer une tâche non achevée. -->
+                <div th:if="${tache.statut != 'TERMINEE' &amp;&amp; peutRealiser}">
+                    <h2>
+                        Enregistrer la réalisation
+                    </h2>
+                    <p class="muted">
+                        Choisissez un résultat existant exact, ou renseignez une nouvelle réalisation.
+                        Vérifiez l'objet et les dates : le libellé de la tâche ne permet pas de les déduire
+                        automatiquement.
+                    </p>
+
+                    <form
+                        class="upload-form"
+                        method="post"
+                        enctype="multipart/form-data"
+                        th:action="@{/personnel/taches/{id}/realisation(id=${tache.id})}"
+                    >
+
+                        <!-- Réutilisation explicite d’une réalisation existante du salarié. -->
+                        <label class="form-field" th:if="${tache.etape != 'SIGNATURE_CONTRAT'}">
+                            Résultat existant / inscription à compléter
+                            <select name="existant">
+                                <option value="">
+                                    Créer une nouvelle réalisation ci-dessous
+                                </option>
+                                <option
+                                    th:each="r:${preuves}"
+                                    th:value="${r.id}"
+                                    th:text="${'#'+r.id+' · '+r.libelle+' · '+(r.date ?: 'non terminée')}"
+                                >
+                                </option>
+                            </select>
+                        </label>
+
+                        <!-- Signature : état du contrat d’entrée et ajout facultatif du PDF signé. -->
+                        <div th:if="${tache.etape == 'SIGNATURE_CONTRAT'}">
+                            <p
+                                th:each="r:${preuves}"
+                                th:text="${'Contrat #'+r.id+' · '+r.statut+' · signature : '+(r.date_signature ?: 'à enregistrer')}"
+                            >
+                            </p>
+                            <label class="form-field">
+                                PDF signé (facultatif, 10 Mio maximum)
+                                <input type="file" name="fichier" accept="application/pdf">
+                            </label>
+                        </div>
+
+                        <!-- Badge : numéro de l’exemplaire effectivement remis. -->
+                        <label class="form-field" th:if="${tache.etape == 'BADGE'}">
+                            Numéro du nouveau badge
+                            <input name="numero" type="text" maxlength="50">
+                        </label>
+
+                        <!-- Compte informatique : système et identifiant opérationnel, sans mot de passe. -->
+                        <div th:if="${tache.etape == 'COMPTE'}">
+                            <label class="form-field">
+                                Système du nouveau compte
+                                <input
+                                    name="systeme"
+                                    type="text"
+                                    maxlength="100"
+                                    placeholder="Messagerie, ERP…"
+                                >
+                            </label>
+
+                            <label class="form-field">
+                                Identifiant opérationnel
+                                <input
+                                    name="identifiant"
+                                    type="text"
+                                    maxlength="150"
+                                    placeholder="Aucun mot de passe"
+                                >
+                            </label>
+                        </div>
+
+                        <!-- Matériel ou formation : sélection de la référence précise dans le catalogue. -->
+                        <label
+                            class="form-field"
+                            th:if="${tache.etape == 'MATERIEL' || tache.etape == 'FORMATION'}"
+                        >
+                            <span
+                                th:text="${tache.etape == 'MATERIEL' ? 'Objet physique à remettre (vérifier l’inventaire)' : 'Formation réellement terminée'}"
+                            >
+                            </span>
+                            <select name="catalogue">
+                                <option value="">
+                                    Choisir pour une nouvelle réalisation
+                                </option>
+                                <option
+                                    th:each="r:${catalogue}"
+                                    th:value="${r.id}"
+                                    th:text="${'#'+r.id+' · '+r.nom}"
+                                >
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="form-field">
+                            <span
+                                th:text="${tache.etape == 'SIGNATURE_CONTRAT' ? 'Date de signature (laisser vide si déjà enregistrée)' : tache.etape == 'FORMATION' ? 'Date de complétion réelle (nécessaire pour terminer une inscription existante)' : 'Date effective (pour une nouvelle réalisation)'}"
+                            >
+                            </span>
+                            <input name="date" type="date" th:max="${aujourdhui}">
+                        </label>
+
+                        <!-- Paie : date de prise en charge de l’inscription confirmée. -->
+                        <label class="form-field" th:if="${tache.etape == 'INSCRIPTION_PAIE'}">
+                            Début de prise en charge (nouvelle inscription)
+                            <input name="priseEnCharge" type="date" th:min="${tache.date_debut}">
+                        </label>
+
+                        <label>
+                            <input name="confirme" type="checkbox" value="true" required>
+                            Je confirme que cette réalisation concerne ce salarié, ce parcours et le résultat
+                            précis demandé.
+                        </label>
+                        <button class="button">
+                            Valider la réalisation et terminer la tâche
+                        </button>
+                    </form>
+
+                </div>
+                <p>
+                    <a th:href="@{/personnel/taches}">
+                        ← Retour à mes tâches
+                    </a>
+                </p>
+            </section>
+
+        </main>
+    </body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            Opération refusée — SIGRH
+        </title>
+        <link rel="stylesheet" th:href="@{/css/recrutement.css}">
+    </head>
+
+    <body>
+
+        <main class="container form-container">
+
+            <!-- Refus ou erreur de validation : message métier et liens de retour. -->
+            <section class="panel">
+                <p class="eyebrow" th:text="${'Erreur '+code}">
+                </p>
+                <h1>
+                    L'opération n'a pas été enregistrée
+                </h1>
+                <p class="error-message" role="alert" th:text="${message}">
+                </p>
+                <p>
+                    Vous pouvez revenir à la page précédente pour corriger le formulaire.
+                </p>
+
+                <nav class="personnel-nav">
+                    <a th:href="@{/personnel}">
+                        Personnel
+                    </a>
+                    <a th:href="@{/personnel/taches}">
+                        Mes tâches
+                    </a>
+                </nav>
+            </section>
+
+        </main>
+    </body>
+</html>
